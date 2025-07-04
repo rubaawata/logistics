@@ -5050,3 +5050,8 @@ table.text-center th {
         white-space: normal !important;
     }
 }
+
+.password-reset {
+  left: 10px;
+  right: unset !important;
+}

@@ -371,6 +371,8 @@ return [
     'Cc Email' => 'ال Cc Email',
     'Clear All Logs' => 'حذف كافة الجلسات',
     'filter_rows_total' => 'اجمالي الأسطر',
+    'filter_rows_to' => 'الى',
+    'filter_rows_of' => 'من',
     'Menu Management' => 'ادارة القوائم',
     'Translation' => 'الترجمة',
     'Key' => 'المفتاح',

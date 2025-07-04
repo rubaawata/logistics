@@ -48,7 +48,10 @@ class AdminPackagesController extends CBController {
 			$this->col[] = ["label"=>"تكلفة التوصيل","name"=>"delivery_cost"];
 			$this->col[] = ["label"=>"سعر الشحنة","name"=>"package_cost"];
 			$this->col[] = ["label"=>"تاريخ التوصيل","name"=>"delivery_date"];
-			$this->col[] = ["label"=>"الحالة","name"=>"status"];
+			$this->col[] = ["label"=>"الحالة","name"=>"status","callback"=>function($row) {
+																				$status = config('constants.PACKAGE_STATUS');
+																				return $status[$row->status];
+																			}];
 			$this->col[] = ["label"=>"عدد محاولات التوصيل","name"=>"number_of_attempts"];
 			# END COLUMNS DO NOT REMOVE THIS LINE
 
@@ -60,12 +63,20 @@ class AdminPackagesController extends CBController {
 			$this->form[] = ['label'=>'المندوب','name'=>'delivery_id','type'=>'select2','validation'=>'min:1|max:255','width'=>'col-sm-10','datatable'=>'deliveries,name'];
 			$this->form[] = ['label'=>"تكلفة التوصيل",'name'=>'delivery_cost','type'=>'number','validation'=>'required|integer|min:0','width'=>'col-sm-10'];
 			$this->form[] = ['label'=>'سعر الشحنة','name'=>'package_cost','type'=>'number','validation'=>'required|integer|min:0','width'=>'col-sm-10'];
-			$this->form[] = ['label'=>'الحالة','name'=>'status','type'=>'select','validation'=>'required|min:1|max:255','width'=>'col-sm-10','dataenum'=>'موصلة;بالانتظار;RTO;معدلة;ملغاة'];
+			$this->form[] = ['label'=>'الحالة','name'=>'status','type'=>'select','validation'=>'required|min:1|max:255','width'=>'col-sm-10','dataenum'=>$this->getPackageStatus()];
 			$this->form[] = ['label'=>'عدد محاولات التوصيل','name'=>'number_of_attempts','type'=>'number','validation'=>'required|integer|min:0','width'=>'col-sm-10'];
 			$this->form[] = ['label'=>'تاريخ التوصيل','name'=>'delivery_date','type'=>'date','validation'=>'required|date','width'=>'col-sm-10'];
 			$this->form[] = ['label'=>'تاريخ الاستلام','name'=>'receipt_date','type'=>'date','validation'=>'required|date','width'=>'col-sm-10'];
 			$this->form[] = ['label'=>'رابط العنوان','name'=>'location_link','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
 			$this->form[] = ['label'=>'العنوان','name'=>'location_text','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
+			
+			$this->form[] = ['label'=>'رقم المبنى','name'=>'building_number','type'=>'text','validation'=>'min:1|max:255','width'=>'col-sm-10'];
+			$this->form[] = ['label'=>'الطابق','name'=>'floor_number','type'=>'text','validation'=>'min:1|max:255','width'=>'col-sm-10'];
+			$this->form[] = ['label'=>'الشقة','name'=>'apartment_number','type'=>'text','validation'=>'min:1|max:255','width'=>'col-sm-10'];
+			$this->form[] = ['label'=>'فتح الشحنة','name'=>'open_package','type'=>'switch','validation'=>'required','width'=>'col-sm-10'];
+			$this->form[] = ['label'=>'وصف الشحنة','name'=>'description','type'=>'text','validation'=>'min:1|max:255','width'=>'col-sm-10'];
+			$this->form[] = ['label'=>'عدد القطع','name'=>'pieces_count','type'=>'number','validation'=>'required','width'=>'col-sm-10'];
+
 			$this->form[] = ['label'=>'ملاحظات','name'=>'notes','type'=>'text','validation'=>'min:1','width'=>'col-sm-10'];
 			# END FORM DO NOT REMOVE THIS LINE
 
@@ -866,6 +877,17 @@ class AdminPackagesController extends CBController {
 
 			$view = $manualView ?: view("crudbooster::default.index", $data);
 			return $view;
+		}
+
+		public function getPackageStatus() {
+			$status = config('constants.PACKAGE_STATUS');
+			$packageStatus = '';
+			foreach($status as $index => $item) {
+				$packageStatus .= $index . '|' . $item;
+				if($index < count($status))
+					$packageStatus .= ';';
+			}
+			return $packageStatus;
 		}
 
 	}

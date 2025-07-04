@@ -1,4 +1,8 @@
+<?php   
+    $status = config('constants.PACKAGE_STATUS');
+?> 
 @extends('crudbooster::admin_template')
+
 
 @push('head')
     <link rel='stylesheet' href='<?php echo asset("vendor/crudbooster/assets/select2/dist/css/select2.min.css")?>'/>
@@ -135,6 +139,27 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="form-group form-datepicker header-group-0 " id="form-group-area_id" style="">
+                                <label class="control-label col-sm-4">
+                                    الحالة
+                                </label>
+                                <div class="col-sm-8">
+                                    <div class="input-group" style='width:100%'>
+                                        <select style='width:100%' class='form-control select2' id="package_status" name="package_status">
+                                            <option value="null">الكل</option>
+                                            @foreach ($status as $index => $item)
+                                                <option {{$selected_status == $index && $index != null ? 'selected' : ''}} value="{{$index}}">{{$item}}</option>
+                                            @endforeach     
+                                        </select>
+                                    </div>
+                                    <p class="help-block"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="row">
                         <div class="col-lg-12">
                             <button class="btn btn-sm btn-success btn-edit" type="submit">بحث</button>
@@ -155,6 +180,7 @@
                         <tr>
                             <th>رقم الشحنة</th>
                             <th>اسم البائع</th>
+                            <th>اسم الزبون</th>
                             <th>رقم هاتف الزبون</th>
                             <th>المندوب</th>
                             <th>المنطقة</th>
@@ -170,11 +196,12 @@
                             <tr>
                                 <td>{{$item['id']}}</td>
                                 <td>{{$item['seller']['seller_name']}}</td>
+                                <td>{{$item['customer']['name']}}</td>
                                 <td>{{$item['customer']['phone_number']}}</td>
                                 <td>{{$item['delivery']['name']}}</td>
                                 <td>{{$item['area']['name']}}</td>
                                 <td>{{$item['location_text']}}</td>
-                                <td>{{$item['status']}}</td>
+                                <td>{{ $status[$item['status']]}}</td>
                                 <td>{{$item['delivery_cost']}}</td>
                                 <td>{{$item['package_cost']}}</td>
                                 <td>
@@ -237,12 +264,10 @@
                 <div class="mb-3">
                     <label for="new_status" class="form-label">حالة جديدة</label>
                     <select class="form-control" id="new_status" data-value="" required="" name="new_status">
-                        <option value="">** Please select a Status</option>
-                        <option value="Delivered">موصلة</option>
-                        <option value="Pending">بالانتظار</option>
-                        <option value="RTO">RTO</option>
-                        <option value="Changed">معدلة</option>
-                        <option value="Canceled">ملغاة</option>        
+                        <option value="">** Please select a Status</option> 
+                        @foreach ($status as $index => $item)
+                            <option value="{{$index}}">{{$item}}</option>
+                        @endforeach      
                     </select>
                     
                 </div>

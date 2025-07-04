@@ -41,7 +41,7 @@ class AdminSellersController extends CBController {
 			$this->col[] = ["label"=>"رقم الموبايل","name"=>"phone_number"];
 			$this->col[] = ["label"=>"رقم الارضي","name"=>"landline_number"];
 			$this->col[] = ["label"=>"الايميل","name"=>"email"];
-			$this->col[] = ["label"=>"رصيد الشحنات","name"=>"(select sum(packages.package_cost) from packages where packages.seller_id = sellers.id and packages.status = 'Delivered') as packages_balance"];
+			$this->col[] = ["label"=>"رصيد الشحنات","name"=>"(select sum(packages.package_cost) from packages where packages.seller_id = sellers.id and packages.status = 1) as packages_balance"];
 			$this->col[] = ["label"=>"الدفعات","name"=>"(select sum(payments.amount) from payments where payments.seller_id = sellers.id) as payments_balance"];
 			$this->col[] = ["label"=>"الرصيد","name"=>"seller_name","callback"=>function($row) {
 								return $row->packages_balance - $row->payments_balance ;

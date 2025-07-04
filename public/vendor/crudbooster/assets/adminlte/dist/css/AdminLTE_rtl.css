@@ -4812,3 +4812,7 @@ table.nestable td{
   padding:0px !important;
 }
 
+.password-reset {
+  left: 10px;
+  right: unset !important;
+}

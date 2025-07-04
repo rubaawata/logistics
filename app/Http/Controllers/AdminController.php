@@ -37,6 +37,7 @@ class AdminController extends CBController
         $selected_seller = $request->input('seller_id');
         $selected_delivery = $request->input('delivery_id');
         $selected_package_id = $request->input('package_id');
+        $selected_status = $request->input('package_status');
 
         $delivery_workers = $this->getDeliveryDailyReport($selected_date);
         //$sellers = $this->getSellerDailyReport($selected_date);
@@ -72,6 +73,10 @@ class AdminController extends CBController
             $packages->where('id', $selected_package_id);
         }
 
+        if (!is_null($selected_status) && $selected_status !== 'null') {
+            $packages->where('status', $selected_status);
+        }
+
         $packages = $packages->get();
 
         $deliveries = Delivery::get();
@@ -93,7 +98,8 @@ class AdminController extends CBController
                                                           'selected_customer',
                                                           'selected_seller',
                                                           'selected_delivery',
-                                                          'selected_package_id'));
+                                                          'selected_package_id',
+                                                          'selected_status'));
     }
 
     private function getDeliveryDailyReport($selected_date)
@@ -273,17 +279,16 @@ class AdminController extends CBController
 
         $month = $request->input('month');
 
-        if ($month && $month != null) {
-            $selected_month = new Carbon($month);
-        } else {
-            $selected_month = Carbon::now()->format('Y-m');;
-        }
-
         $months = DB::table('packages')
                     ->select(DB::raw("DATE_FORMAT(delivery_date, '%Y-%m') as formatted_date"))
                     ->distinct()
                     ->pluck('formatted_date');
         
+        if ($month && $month != null) {
+            $selected_month = new Carbon($month);
+        } else {
+            $selected_month = new Carbon($months[0]);
+        }
         $deliveries_data = Delivery::all();
         $deliveries = [];
         list($year, $month) = explode('-', $selected_month);
@@ -297,13 +302,13 @@ class AdminController extends CBController
                                     ->whereYear('delivery_date', $year)
                                     ->whereMonth('delivery_date', $month)
                                     ->where('delivery_id', $item['id'])
-                                    ->where('status', 'موصلة')
+                                    ->where('status', '1') //status 1 mean موصلة
                                     ->count();
             $total_none_delivered_packages = DB::table('packages')
                                     ->whereYear('delivery_date', $year)
                                     ->whereMonth('delivery_date', $month)
                                     ->where('delivery_id', $item['id'])
-                                    ->where('status', '!=', 'موصلة')
+                                    ->where('status', '!=', '1') // status 1 mean موصلة
                                     ->count();
             $deliveries []= [
                 'id' => $item['id'],
