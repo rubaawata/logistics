@@ -1,5 +1,6 @@
 <?php   
     $status = config('constants.PACKAGE_STATUS');
+    
 ?> 
 @extends('crudbooster::admin_template')
 
@@ -35,15 +36,15 @@
             <form method="GET" id="dateForm">
                 <div class="box-header">
                     <div class="row">
+                        
                         <div class="col-lg-6">
-                            <div class="form-group form-datepicker header-group-0 " id="form-group-delivery_date" style="">
+                            <div class="form-group form-datepicker header-group-0 " id="form-group-delivery_date_to" style="">
                                 <label class="control-label col-sm-4">
-                                     التاريخ
+                                    التاريخ
                                 </label>
                                 <div class="col-sm-8">
-                                    <div class="input-group">
-                                        <span class="input-group-addon open-datetimepicker"><a><i class="fa fa-calendar "></i></a></span>
-                                        <input type="text" title="Date" readonly="" required="" class="form-control notfocus input_date" name="date" id="date" value="{{$selected_date}}">
+                                    <div class="input-group w-100" style="width: 100%">
+                                        <input type="text" name="datefilter" class="form-control notfocus input_date w-100" value="{{ request('datefilter') ?? \Carbon\Carbon::today()->format('m/d/Y') . ' - ' . \Carbon\Carbon::today()->format('m/d/Y') }}" style="width: 100%"/>
                                     </div>
                                     <p class="help-block"></p>
                                 </div>
@@ -67,6 +68,7 @@
                                 </div>
                             </div>
                         </div>
+                        
                     </div>
                     <div class="row">
                         <div class="col-lg-6">
@@ -159,6 +161,7 @@
                                 </div>
                             </div>
                         </div>
+                        
                     </div>
                     <div class="row">
                         <div class="col-lg-12">
@@ -188,6 +191,7 @@
                             <th>الحالة</th>
                             <th>كلفة الشحن</th>
                             <th>سعر الشحنة</th>
+                            <th>تاريخ التوصيل</th>
                             <th>العمليات</th>
                         </tr>
                     </thead>
@@ -203,6 +207,7 @@
                                 <td>{{$item['location_text']}}</td>
                                 <td>{{ $status[$item['status']]}}</td>
                                 <td>{{$item['delivery_cost']}}</td>
+                                <td>{{$item['delivery_date']}}</td>
                                 <td>{{$item['package_cost']}}</td>
                                 <td>
                                     <button class="btn btn-xs btn-success btn-edit" onclick="updatePackageStatusModal({{$item['id']}}, '{{$item['status']}}')">تعديل الحالة</button>
@@ -379,6 +384,10 @@
                 $(this).next('.input_date').datepicker('show');
             });
 
+            $('.open-datetimepicker1').click(function () {
+                $(this).next('.input_date').datepicker('show');
+            });
+
             /*$('#date').on('change', function () {
                 $('#dateForm').submit();
             });*/
@@ -531,5 +540,26 @@
         $(function() {
             $('.select2').select2();
         })
+    </script>
+
+    <script type="text/javascript">
+        $(function() {
+
+            $('input[name="datefilter"]').daterangepicker({
+                autoUpdateInput: false,
+                locale: {
+                    cancelLabel: 'Clear'
+                }
+            });
+
+            $('input[name="datefilter"]').on('apply.daterangepicker', function(ev, picker) {
+                $(this).val(picker.startDate.format('MM/DD/YYYY') + ' - ' + picker.endDate.format('MM/DD/YYYY'));
+            });
+
+            $('input[name="datefilter"]').on('cancel.daterangepicker', function(ev, picker) {
+                $(this).val('');
+            });
+
+        });
     </script>
 @endpush

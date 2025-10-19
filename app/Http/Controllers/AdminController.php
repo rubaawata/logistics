@@ -24,13 +24,26 @@ class AdminController extends CBController
             return redirect(CRUDBooster::adminPath('login'));
         }
 
-        $date = $request->input('date');
+        $dateRange = request('datefilter');
 
-        if ($date && $date != null) {
-            $selected_date = new Carbon($date);
+        if ($dateRange) {
+            [$startDate, $endDate] = explode(' - ', $dateRange);
+
+            $selected_date_from = Carbon::createFromFormat('m/d/Y', trim($startDate))->startOfDay();
+            $selected_date_to = Carbon::createFromFormat('m/d/Y', trim($endDate))->endOfDay();
         } else {
-            $selected_date = Carbon::today();
+            // Use today's date for both start and end
+            $selected_date_from = Carbon::today()->startOfDay();
+            $selected_date_to = Carbon::today()->endOfDay();
         }
+        $selected_date_filter = $selected_date_from . '-' . $selected_date_to;
+        /*$date_from = $request->input('date_from');
+
+        if ($date_from && $date_from != null) {
+            $selected_date_from = new Carbon($date_from);
+        } else {
+            $selected_date_from = Carbon::today();
+        }*/
 
         $selected_area = $request->input('area_id');
         $selected_customer = $request->input('customer_id');
@@ -39,11 +52,20 @@ class AdminController extends CBController
         $selected_package_id = $request->input('package_id');
         $selected_status = $request->input('package_status');
 
-        $delivery_workers = $this->getDeliveryDailyReport($selected_date);
+        //$selected_date_to = $request->input('date_to');
+
+        $delivery_workers = $this->getDeliveryDailyReport($selected_date_from, $selected_date_to);
         //$sellers = $this->getSellerDailyReport($selected_date);
         //$packages = $this->getTodayPackages($selected_date);
-        $packages = Package::where('delivery_date', $selected_date)
+        $packages = Package::whereDate('delivery_date', '>=', $selected_date_from)
             ->with(['Seller', 'Customer', 'Delivery', 'Area']);
+
+
+        if (!is_null($selected_date_to) && $selected_date_to !== 'null') {
+            
+            $selected_date_to = Carbon::parse($selected_date_to)->endOfDay();
+            $packages->where('delivery_date', '<=', $selected_date_to);
+        }
 
         if (!is_null($selected_area) && $selected_area !== 'null') {
             $packages->whereHas('Area', function ($query) use ($selected_area) {
@@ -87,8 +109,7 @@ class AdminController extends CBController
 
         $customers = Customer::all();
 
-        return view('home', compact('delivery_workers', 
-                                               'selected_date', 
+        return view('home', compact('delivery_workers',  
                                                           'packages', 
                                                           'deliveries', 
                                                           'areas', 
@@ -102,17 +123,23 @@ class AdminController extends CBController
                                                           'selected_status'));
     }
 
-    private function getDeliveryDailyReport($selected_date)
+    private function getDeliveryDailyReport($selected_date_from, $selected_date_to)
     {
-        $delivery_workers_data = Delivery::whereHas('packages', function ($query) use ($selected_date) {
-            $query->whereDate('delivery_date', $selected_date);
+        $delivery_workers_data = Delivery::whereHas('packages', function ($query) use ($selected_date_from, $selected_date_to) {
+            $query->whereDate('delivery_date', '>=', $selected_date_from);
+            if (!is_null($selected_date_to) && $selected_date_to !== 'null') {
+                $query->where('delivery_date', '<=', $selected_date_to);
+            }
         })
-            ->with([
-                'packages' => function ($query) use ($selected_date) {
-                    $query->whereDate('delivery_date', $selected_date);
+        ->with([
+            'packages' => function ($query) use ($selected_date_from, $selected_date_to) {
+                $query->whereDate('delivery_date', $selected_date_from);
+                if (!is_null($selected_date_to) && $selected_date_to !== 'null') {
+                    $query->where('delivery_date', '<=', $selected_date_to);
                 }
-            ])
-            ->get();
+            }
+        ])
+        ->get();
 
         $delivery_workers = [];
 
