@@ -46,6 +46,17 @@ return [
             'provider' => 'users',
             'hash' => false,
         ],
+
+        'delivery' => [
+            'driver' => 'session',
+            'provider' => 'deliveries',
+        ],
+
+        'delivery-api' => [
+            'driver' => 'token',
+            'provider' => 'deliveries',
+            'hash' => false,
+        ],
     ],
 
     /*
@@ -75,6 +86,11 @@ return [
         //     'driver' => 'database',
         //     'table' => 'users',
         // ],
+
+        'deliveries' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Delivery::class,
+        ],
     ],
 
     /*

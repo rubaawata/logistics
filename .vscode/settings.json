@@ -1,0 +1,8 @@
+{
+    "i18n-ally.localesPaths": [
+        "resources/lang",
+        "public/landing_page/js/includes/tinymce/langs",
+        "public/landing_page/js/plugins/jqGrid/i18n",
+        "public/landing_page/js/includes/tinymce/plugins/advlink/langs"
+    ]
+}

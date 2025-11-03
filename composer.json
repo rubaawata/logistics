@@ -15,6 +15,7 @@
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^6.3.1|^7.0.1",
         "laravel/framework": "^7.29",
+        "laravel/sanctum": "^2.15",
         "laravel/tinker": "^2.5",
         "mpdf/mpdf": "^8.2",
         "voila_cms/crudbooster": "v3.0.0.41"
