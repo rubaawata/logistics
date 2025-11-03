@@ -10,15 +10,9 @@ class ShipmentRepository
 {
     public function getTodayAssignedShipments($deliveryId)
     {
-        $activeStatuses = [
-            2, // RTO
-            3, // ملغاة
-            4, // معدلة
-            5, //بالانتظار
-        ];
         return Package::where('delivery_id', $deliveryId)
             ->whereDate('delivery_date', today())
-            ->whereIn('status', $activeStatuses)->with('customer')
+            ->where('status', 5)->with('customer')
             ->get();
     }
 
