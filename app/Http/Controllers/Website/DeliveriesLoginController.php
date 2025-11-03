@@ -30,6 +30,7 @@ class DeliveriesLoginController extends Controller
 
         try {
             $this->authService->login($validated['phone'], $validated['password']);
+            return redirect()->route('deliveries.dashboard')->with('success', 'Login successful');
         } catch (\Illuminate\Validation\ValidationException $e) {
             return back()->withErrors($e->errors())->withInput();
         }
