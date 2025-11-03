@@ -12,7 +12,7 @@ class ShipmentRepository
     {
         return Package::where('delivery_id', $deliveryId)
             ->whereDate('delivery_date', today())
-            ->where('status', 5)->with('customer')
+            ->where('status', 5)->with('customer')->with('Area')
             ->get();
     }
 

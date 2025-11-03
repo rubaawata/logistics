@@ -86,7 +86,8 @@
                                 <div class="address-info mb-3">
                                     <h6>العنوان</h6>
                                     <p class="mb-1 small text-dark">
-                                        <strong>المنطقة:</strong> {{ $shipment->location_text }}<br>
+                                        <strong>المنطقة:</strong> {{ $shipment->area->name }}<br>
+                                        <strong>الموقع:</strong> {{ $shipment->location_text }}<br>
                                         <strong>العمارة:</strong> {{ $shipment->building_number }}<br>
                                         <strong>الطابق:</strong> {{ $shipment->floor_number }}<br>
                                         <strong>الشقة:</strong> {{ $shipment->apartment_number }}<br>
