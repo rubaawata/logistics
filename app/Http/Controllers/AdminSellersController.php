@@ -1,80 +1,86 @@
 <?php
+
 namespace App\Http\Controllers;
 
+use App\Models\Package;
+use App\Models\Seller;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\DB;
 use crocodicstudio\crudbooster\helpers\CRUDBooster;
 use crocodicstudio\crudbooster\controllers\CBController;
+use Mpdf\Mpdf;
 
-class AdminSellersController extends CBController {
+class AdminSellersController extends CBController
+{
 
-	public function cbInit() {
+    public function cbInit()
+    {
 
-			# START CONFIGURATION DO NOT REMOVE THIS LINE
-			$this->title_field = "seller_name";
-			$this->limit = "20";
-			$this->orderby = "id,desc";
-			$this->sortable_table = true;
-			$this->global_privilege = false;
-			$this->button_table_action = true;
-			$this->button_bulk_action = true;
-			$this->button_action_style = "button_icon";
-			$this->record_seo = false;
-			$this->button_add = true;
-			$this->button_edit = true;
-			$this->button_delete = true;
-			$this->button_detail = true;
-			$this->pdf_direction = "ltr";
-			$this->button_show = true;
-			$this->button_filter = true;
-			$this->button_import = false;
-			$this->button_export = false;
-			$this->page_seo = false;
-			$this->table = "sellers";
-			# END CONFIGURATION DO NOT REMOVE THIS LINE
+        # START CONFIGURATION DO NOT REMOVE THIS LINE
+        $this->title_field = "seller_name";
+        $this->limit = "20";
+        $this->orderby = "id,desc";
+        $this->sortable_table = true;
+        $this->global_privilege = false;
+        $this->button_table_action = true;
+        $this->button_bulk_action = true;
+        $this->button_action_style = "button_icon";
+        $this->record_seo = false;
+        $this->button_add = true;
+        $this->button_edit = true;
+        $this->button_delete = true;
+        $this->button_detail = true;
+        $this->pdf_direction = "ltr";
+        $this->button_show = true;
+        $this->button_filter = true;
+        $this->button_import = false;
+        $this->button_export = false;
+        $this->page_seo = false;
+        $this->table = "sellers";
+        # END CONFIGURATION DO NOT REMOVE THIS LINE
 
-			# START COLUMNS DO NOT REMOVE THIS LINE
-			$this->col = [];
-			$this->col[] = ["label"=>"اسم البائع","name"=>"seller_name"];
-			$this->col[] = ["label"=>"اسم الشركة","name"=>"company_name"];
-			$this->col[] = ["label"=>"رقم الموبايل","name"=>"phone_number"];
-			$this->col[] = ["label"=>"رقم الارضي","name"=>"landline_number"];
-			$this->col[] = ["label"=>"الايميل","name"=>"email"];
-			$this->col[] = ["label"=>"رصيد الشحنات","name"=>"(select sum(packages.package_cost) from packages where packages.seller_id = sellers.id and packages.status = 1) as packages_balance"];
-			$this->col[] = ["label"=>"الدفعات","name"=>"(select sum(payments.amount) from payments where payments.seller_id = sellers.id) as payments_balance"];
-			$this->col[] = ["label"=>"الرصيد","name"=>"seller_name","callback"=>function($row) {
-								return $row->packages_balance - $row->payments_balance ;
-							}];
-			# END COLUMNS DO NOT REMOVE THIS LINE
+        # START COLUMNS DO NOT REMOVE THIS LINE
+        $this->col = [];
+        $this->col[] = ["label" => "اسم البائع", "name" => "seller_name"];
+        $this->col[] = ["label" => "اسم الشركة", "name" => "company_name"];
+        $this->col[] = ["label" => "رقم الموبايل", "name" => "phone_number"];
+        $this->col[] = ["label" => "رقم الارضي", "name" => "landline_number"];
+        $this->col[] = ["label" => "الايميل", "name" => "email"];
+        $this->col[] = ["label" => "رصيد الشحنات", "name" => "(select sum(packages.package_cost) from packages where packages.seller_id = sellers.id and packages.status = 1) as packages_balance"];
+        $this->col[] = ["label" => "الدفعات", "name" => "(select sum(payments.amount) from payments where payments.seller_id = sellers.id) as payments_balance"];
+        $this->col[] = ["label" => "الرصيد", "name" => "seller_name", "callback" => function ($row) {
+            return $row->packages_balance - $row->payments_balance;
+        }];
+        # END COLUMNS DO NOT REMOVE THIS LINE
 
-			# START FORM DO NOT REMOVE THIS LINE
-			$this->form = [];
-			$this->form[] = ['label'=>'اسم البائع','name'=>'seller_name','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
-			$this->form[] = ['label'=>'اسم الشركة','name'=>'company_name','type'=>'text','validation'=>'required|min:1|max:255','width'=>'col-sm-10'];
-			$this->form[] = ['label'=>'رقم الموبايل','name'=>'phone_number','type'=>'number','validation'=>'required|numeric','width'=>'col-sm-10','placeholder'=>'You can only enter the number only'];
-			$this->form[] = ['label'=>'رقم الارضي','name'=>'landline_number','type'=>'text','validation'=>'min:1|max:255','width'=>'col-sm-10'];
-			$this->form[] = ['label'=>'الايميل','name'=>'email','type'=>'email','validation'=>'min:1|max:255|email|unique:sellers','width'=>'col-sm-10','placeholder'=>'Please enter a valid email address'];
-			$this->form[] = ['label'=>'رابط العنوان الاول','name'=>'location_link_1','type'=>'text','validation'=>'min:1|max:255','width'=>'col-sm-10'];
-			$this->form[] = ['label'=>'العنوان الاول','name'=>'location_text_1','type'=>'text','validation'=>'min:1|max:255','width'=>'col-sm-10'];
-			$this->form[] = ['label'=>'رابط العنوان الثاني','name'=>'location_link_2','type'=>'text','validation'=>'min:1|max:255','width'=>'col-sm-10'];
-			$this->form[] = ['label'=>'العنوان الثاني','name'=>'location_text_2','type'=>'text','validation'=>'min:1|max:255','width'=>'col-sm-10'];
-			# END FORM DO NOT REMOVE THIS LINE
+        # START FORM DO NOT REMOVE THIS LINE
+        $this->form = [];
+        $this->form[] = ['label' => 'اسم البائع', 'name' => 'seller_name', 'type' => 'text', 'validation' => 'required|min:1|max:255', 'width' => 'col-sm-10'];
+        $this->form[] = ['label' => 'اسم الشركة', 'name' => 'company_name', 'type' => 'text', 'validation' => 'required|min:1|max:255', 'width' => 'col-sm-10'];
+        $this->form[] = ['label' => 'رقم الموبايل', 'name' => 'phone_number', 'type' => 'number', 'validation' => 'required|numeric', 'width' => 'col-sm-10', 'placeholder' => 'You can only enter the number only'];
+        $this->form[] = ['label' => 'رقم الارضي', 'name' => 'landline_number', 'type' => 'text', 'validation' => 'min:1|max:255', 'width' => 'col-sm-10'];
+        $this->form[] = ['label' => 'الايميل', 'name' => 'email', 'type' => 'email', 'validation' => 'min:1|max:255|email|unique:sellers', 'width' => 'col-sm-10', 'placeholder' => 'Please enter a valid email address'];
+        $this->form[] = ['label' => 'رابط العنوان الاول', 'name' => 'location_link_1', 'type' => 'text', 'validation' => 'min:1|max:255', 'width' => 'col-sm-10'];
+        $this->form[] = ['label' => 'العنوان الاول', 'name' => 'location_text_1', 'type' => 'text', 'validation' => 'min:1|max:255', 'width' => 'col-sm-10'];
+        $this->form[] = ['label' => 'رابط العنوان الثاني', 'name' => 'location_link_2', 'type' => 'text', 'validation' => 'min:1|max:255', 'width' => 'col-sm-10'];
+        $this->form[] = ['label' => 'العنوان الثاني', 'name' => 'location_text_2', 'type' => 'text', 'validation' => 'min:1|max:255', 'width' => 'col-sm-10'];
+        # END FORM DO NOT REMOVE THIS LINE
 
-			# OLD START FORM
-			//$this->form = [];
-			//$this->form[] = ["label"=>"Seller Name","name"=>"seller_name","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
-			//$this->form[] = ["label"=>"Company Name","name"=>"company_name","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
-			//$this->form[] = ["label"=>"Phone Number","name"=>"phone_number","type"=>"number","required"=>TRUE,"validation"=>"required|numeric","placeholder"=>"You can only enter the number only"];
-			//$this->form[] = ["label"=>"Landline Number","name"=>"landline_number","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
-			//$this->form[] = ["label"=>"Email","name"=>"email","type"=>"email","required"=>TRUE,"validation"=>"required|min:1|max:255|email|unique:sellers","placeholder"=>"Please enter a valid email address"];
-			//$this->form[] = ["label"=>"Location Link 1","name"=>"location_link_1","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
-			//$this->form[] = ["label"=>"Location Text 1","name"=>"location_text_1","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
-			//$this->form[] = ["label"=>"Location Link 2","name"=>"location_link_2","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
-			//$this->form[] = ["label"=>"Location Text 2","name"=>"location_text_2","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
-			# OLD END FORM
+        # OLD START FORM
+        //$this->form = [];
+        //$this->form[] = ["label"=>"Seller Name","name"=>"seller_name","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
+        //$this->form[] = ["label"=>"Company Name","name"=>"company_name","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
+        //$this->form[] = ["label"=>"Phone Number","name"=>"phone_number","type"=>"number","required"=>TRUE,"validation"=>"required|numeric","placeholder"=>"You can only enter the number only"];
+        //$this->form[] = ["label"=>"Landline Number","name"=>"landline_number","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
+        //$this->form[] = ["label"=>"Email","name"=>"email","type"=>"email","required"=>TRUE,"validation"=>"required|min:1|max:255|email|unique:sellers","placeholder"=>"Please enter a valid email address"];
+        //$this->form[] = ["label"=>"Location Link 1","name"=>"location_link_1","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
+        //$this->form[] = ["label"=>"Location Text 1","name"=>"location_text_1","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
+        //$this->form[] = ["label"=>"Location Link 2","name"=>"location_link_2","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
+        //$this->form[] = ["label"=>"Location Text 2","name"=>"location_text_2","type"=>"text","required"=>TRUE,"validation"=>"required|min:1|max:255"];
+        # OLD END FORM
 
-			/*
+        /*
 	        | ----------------------------------------------------------------------
 	        | Sub Module
 	        | ----------------------------------------------------------------------
@@ -86,11 +92,11 @@ class AdminSellersController extends CBController {
 			| @parent_columns = Sparate with comma, e.g : name,created_at
 	        |
 	        */
-	        $this->sub_module = array();
-			$this->sub_module []= ['label' => 'Payments', 'path' => 'payments', 'foreign_key' => 'seller_id', 'button_color' => 'warning', 'parent_columns' => 'seller_name'];
-			$this->sub_module []= ['label' => 'Packages', 'path' => 'packages', 'foreign_key' => 'seller_id', 'button_color' => 'primary', 'parent_columns' => 'seller_name'];
+        $this->sub_module = array();
+        $this->sub_module[] = ['label' => 'Payments', 'path' => 'payments', 'foreign_key' => 'seller_id', 'button_color' => 'warning', 'parent_columns' => 'seller_name'];
+        $this->sub_module[] = ['label' => 'Packages', 'path' => 'packages', 'foreign_key' => 'seller_id', 'button_color' => 'primary', 'parent_columns' => 'seller_name'];
 
-	        /*
+        /*
 	        | ----------------------------------------------------------------------
 	        | Add More Action Button / Menu
 	        | ----------------------------------------------------------------------
@@ -101,10 +107,22 @@ class AdminSellersController extends CBController {
 	        | @showIf 	   = If condition when action show. Use field alias. e.g : [id] == 1
 	        |
 	        */
-	        $this->addaction = array();
+        $this->addaction = array();
+        $this->addaction[] = [
+            'url'   => CRUDBooster::mainpath('export-seller-report/[id]'),
+            'icon' => 'fa fa-file-pdf-o',
+            'color' => 'success',
+        ];
 
+        //TODO
+        $this->addaction[] = [
+            'label' => 'show in local',
+            'url'   => 'export-seller-report/[id]',
+            'icon'  => 'fa fa-file-excel-o',
+            'color' => 'success',
+        ];
 
-	        /*
+        /*
 	        | ----------------------------------------------------------------------
 	        | Add More Button Selected
 	        | ----------------------------------------------------------------------
@@ -114,10 +132,10 @@ class AdminSellersController extends CBController {
 	        | Then about the action, you should code at actionButtonSelected method
 	        |
 	        */
-	        $this->button_selected = array();
+        $this->button_selected = array();
 
 
-	        /*
+        /*
 	        | ----------------------------------------------------------------------
 	        | Add alert message to this module at overheader
 	        | ----------------------------------------------------------------------
@@ -125,11 +143,11 @@ class AdminSellersController extends CBController {
 	        | @type    = warning,success,danger,info
 	        |
 	        */
-	        $this->alert        = array();
+        $this->alert        = array();
 
 
 
-	        /*
+        /*
 	        | ----------------------------------------------------------------------
 	        | Add more button to header button
 	        | ----------------------------------------------------------------------
@@ -138,11 +156,11 @@ class AdminSellersController extends CBController {
 	        | @icon  = Icon from Awesome.
 	        |
 	        */
-	        $this->index_button = array();
+        $this->index_button = array();
 
 
 
-	        /*
+        /*
 	        | ----------------------------------------------------------------------
 	        | Customize Table Row Color
 	        | ----------------------------------------------------------------------
@@ -150,21 +168,21 @@ class AdminSellersController extends CBController {
 	        | @color = Default is none. You can use bootstrap success,info,warning,danger,primary.
 	        |
 	        */
-	        $this->table_row_color = array();
+        $this->table_row_color = array();
 
 
-	        /*
+        /*
 	        | ----------------------------------------------------------------------
 	        | You may use this bellow array to add statistic at dashboard
 	        | ----------------------------------------------------------------------
 	        | @label, @count, @icon, @color
 	        |
 	        */
-	        $this->index_statistic = array();
+        $this->index_statistic = array();
 
 
 
-	        /*
+        /*
 	        | ----------------------------------------------------------------------
 	        | Add javascript at body
 	        | ----------------------------------------------------------------------
@@ -172,10 +190,10 @@ class AdminSellersController extends CBController {
 	        | $this->script_js = "function() { ... }";
 	        |
 	        */
-	        $this->script_js = NULL;
+        $this->script_js = NULL;
 
 
-            /*
+        /*
 	        | ----------------------------------------------------------------------
 	        | Include HTML Code before index table
 	        | ----------------------------------------------------------------------
@@ -183,11 +201,11 @@ class AdminSellersController extends CBController {
 	        | $this->pre_index_html = "<p>test</p>";
 	        |
 	        */
-	        $this->pre_index_html = null;
+        $this->pre_index_html = null;
 
 
 
-	        /*
+        /*
 	        | ----------------------------------------------------------------------
 	        | Include HTML Code after index table
 	        | ----------------------------------------------------------------------
@@ -195,11 +213,11 @@ class AdminSellersController extends CBController {
 	        | $this->post_index_html = "<p>test</p>";
 	        |
 	        */
-	        $this->post_index_html = null;
+        $this->post_index_html = null;
 
 
 
-	        /*
+        /*
 	        | ----------------------------------------------------------------------
 	        | Include Javascript File
 	        | ----------------------------------------------------------------------
@@ -207,11 +225,11 @@ class AdminSellersController extends CBController {
 	        | $this->load_js[] = asset("myfile.js");
 	        |
 	        */
-	        $this->load_js = array();
+        $this->load_js = array();
 
 
 
-	        /*
+        /*
 	        | ----------------------------------------------------------------------
 	        | Add css style at body
 	        | ----------------------------------------------------------------------
@@ -219,11 +237,11 @@ class AdminSellersController extends CBController {
 	        | $this->style_css = ".style{....}";
 	        |
 	        */
-	        $this->style_css = NULL;
+        $this->style_css = NULL;
 
 
 
-	        /*
+        /*
 	        | ----------------------------------------------------------------------
 	        | Include css File
 	        | ----------------------------------------------------------------------
@@ -231,13 +249,11 @@ class AdminSellersController extends CBController {
 	        | $this->load_css[] = asset("myfile.css");
 	        |
 	        */
-	        $this->load_css = array();
+        $this->load_css = array();
+    }
 
 
-	    }
-
-
-	    /*
+    /*
 	    | ----------------------------------------------------------------------
 	    | Hook for button selected
 	    | ----------------------------------------------------------------------
@@ -245,59 +261,64 @@ class AdminSellersController extends CBController {
 	    | @button_name = the name of button
 	    |
 	    */
-	    public function actionButtonSelected($id_selected,$button_name) {
-	        //Your code here
+    public function actionButtonSelected($id_selected, $button_name)
+    {
+        //Your code here
 
-	    }
+    }
 
 
-	    /*
+    /*
 	    | ----------------------------------------------------------------------
 	    | Hook for manipulate query of index result
 	    | ----------------------------------------------------------------------
 	    | @query = current sql query
 	    |
 	    */
-	    public function hook_query_index(&$query) {
-	        //Your code here
+    public function hook_query_index(&$query)
+    {
+        //Your code here
 
-	    }
+    }
 
-	    /*
+    /*
 	    | ----------------------------------------------------------------------
 	    | Hook for manipulate row of index table html
 	    | ----------------------------------------------------------------------
 	    |
 	    */
-	    public function hook_row_index($column_index,&$column_value) {
-	    	//Your code here
-	    }
+    public function hook_row_index($column_index, &$column_value)
+    {
+        //Your code here
+    }
 
-	    /*
+    /*
 	    | ----------------------------------------------------------------------
 	    | Hook for manipulate data input before add data is execute
 	    | ----------------------------------------------------------------------
 	    | @arr
 	    |
 	    */
-	    public function hook_before_add(&$postdata) {
-	        //Your code here
+    public function hook_before_add(&$postdata)
+    {
+        //Your code here
 
-	    }
+    }
 
-	    /*
+    /*
 	    | ----------------------------------------------------------------------
 	    | Hook for execute command after add public static function called
 	    | ----------------------------------------------------------------------
 	    | @id = last insert id
 	    |
 	    */
-	    public function hook_after_add($id) {
-	        //Your code here
+    public function hook_after_add($id)
+    {
+        //Your code here
 
-	    }
+    }
 
-	    /*
+    /*
 	    | ----------------------------------------------------------------------
 	    | Hook for manipulate data input before update data is execute
 	    | ----------------------------------------------------------------------
@@ -305,12 +326,13 @@ class AdminSellersController extends CBController {
 	    | @id       = current id
 	    |
 	    */
-	    public function hook_before_edit(&$postdata,$id) {
-	        //Your code here
+    public function hook_before_edit(&$postdata, $id)
+    {
+        //Your code here
 
-	    }
+    }
 
-	    /*
+    /*
 	    | ----------------------------------------------------------------------
 	    | Hook for manipulate data input before update page is open
 	    | ----------------------------------------------------------------------
@@ -318,51 +340,79 @@ class AdminSellersController extends CBController {
 	    | @id  = current id
 	    |
 	    */
-	    public function hook_before_get_edit($id, &$row)
-        {
-            //Your code here
+    public function hook_before_get_edit($id, &$row)
+    {
+        //Your code here
 
-        }
+    }
 
-	    /*
+    /*
 	    | ----------------------------------------------------------------------
 	    | Hook for execute command after edit public static function called
 	    | ----------------------------------------------------------------------
 	    | @id       = current id
 	    |
 	    */
-	    public function hook_after_edit($id) {
-	        //Your code here
+    public function hook_after_edit($id)
+    {
+        //Your code here
 
-	    }
+    }
 
-	    /*
+    /*
 	    | ----------------------------------------------------------------------
 	    | Hook for execute command before delete public static function called
 	    | ----------------------------------------------------------------------
 	    | @id       = current id
 	    |
 	    */
-	    public function hook_before_delete($id) {
-	        //Your code here
+    public function hook_before_delete($id)
+    {
+        //Your code here
 
-	    }
+    }
 
-	    /*
+    /*
 	    | ----------------------------------------------------------------------
 	    | Hook for execute command after delete public static function called
 	    | ----------------------------------------------------------------------
 	    | @id       = current id
 	    |
 	    */
-	    public function hook_after_delete($id) {
-	        //Your code here
+    public function hook_after_delete($id)
+    {
+        //Your code here
 
-	    }
-
-
-
-	    //By the way, you can still create your own method in here... :)
+    }
 
 
-	}
+
+    //By the way, you can still create your own method in here... :)
+
+    public function getExportSellerReport($id)
+    {
+        $seller = Seller::where('id', '=', $id)->first();
+        $package = Package::where('seller_id', $seller->id)->whereDate('delivery_date', today())->with('Customer')->with('Seller')
+            ->get();
+
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'default_font' => 'dejavusans',
+            'format' => [200, 180],
+            'directionality' => 'rtl',
+        ]);
+        $data = [
+            'packages' => $package,
+            'seller_name' => $seller->seller_name,
+            'report_date' => now()->format('Y-m-d H:i:s'),
+        ];
+
+
+        $html = view('pdf.seller_report', $data)->render();
+
+        $mpdf->WriteHTML($html);
+
+        return response($mpdf->Output('', 'S'), 200)
+            ->header('Content-Type', 'application/pdf');
+    }
+}

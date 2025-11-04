@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Website;
 use App\Http\Controllers\Controller;
 use App\Models\Delivery;
 use App\Models\Package;
+use App\Models\Seller;
 use App\Services\DeliveryAuthService;
 use App\Services\ShipmentService;
 use Illuminate\Http\Request;
@@ -76,5 +77,28 @@ class DeliveryDashboardController extends Controller
             'report_date' => now()->format('Y-m-d H:i:s'),
         ];
         return view('pdf.delivery_report', $data);
+    }
+
+ //TODO
+    public function seller($id)
+    {
+        $seller = Seller::where('id', '=', $id)->first();
+        $package = Package::where('seller_id', $seller->id)->whereDate('delivery_date', today())->with('Customer')->with('Seller')
+            ->get();
+
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'default_font' => 'dejavusans',
+            'format' => [200, 180],
+            'directionality' => 'rtl',
+        ]);
+        $data = [
+            'packages' => $package,
+            'seller_name' => $seller->seller_name,
+            'report_date' => now()->format('Y-m-d H:i:s'),
+        ];
+
+
+        return view('pdf.seller_report', $data);
     }
 }
