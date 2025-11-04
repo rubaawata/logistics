@@ -106,10 +106,10 @@
                                             </a>
                                         </div>
                                         <div class="col-6">
-                                            <a href="https://wa.me/{{ $shipment->customer->phone_number }}?text=مرحباً، أنا مندوب التوصيل"
+                                            <button onclick="redirectToWhatsApp('{{ $shipment->customer->phone_number }}')"
                                                 target="_blank" class="btn btn-whatsapp w-100">
                                                 <i class="fab fa-whatsapp"></i> واتساب
-                                            </a>
+                                            </button>
                                         </div>
                                     </div>
 
@@ -321,6 +321,16 @@
                     }
                 });
             });
+        </script>
+
+        <script>
+            function redirectToWhatsApp(phoneNumber) {
+                phoneNumber = '+963' + phoneNumber;
+                const message = 'مرحباً، أنا مندوب التوصيل'; // Optional pre-filled message
+                const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                
+                window.open(url, '_blank');
+            }
         </script>
     @endpush
 @endsection

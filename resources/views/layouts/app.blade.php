@@ -19,7 +19,7 @@
 </head>
 
 <body class="d-flex align-items-center justify-content-center">
-    <div class="full-container">
+    <div class="full-container w-100">
         @yield('content')
 
     </div>

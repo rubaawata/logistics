@@ -1,12 +1,14 @@
 :root {
     /* === Theme Colors === */
-    --color-primary: #ff9b00; /* Main accent orange */
-    --color-secondary: #ffe100; /* Bright yellow */
-    --color-accent: #ffc900; /* Soft golden tone */
-    --color-light: #ebe389; /* Light pastel */
+    --color-primary: #1B3954; /* Main accent orange */
+    --color-secondary: #719F39; /* Bright yellow */
+    --color-accent: #3A5A78; /* Soft golden tone */
+    --color-light: #F5F7FA; /* Light pastel */
+
+    --main-background: #ffffff;
 
     --color-dark: #0f0f0f;
-    --color-card-bg: #1a1a1a;
+    --color-card-bg: #0D1C2A;
     --color-text: #f5f5f5;
     --color-muted: #b3b3b3;
 
@@ -16,7 +18,7 @@
 }
 
 body {
-    background: var(--color-light);
+    background: var(--main-background);
     color: var(--color-text);
     font-family: var(--font-family);
     direction: rtl;
@@ -38,8 +40,8 @@ body {
 .btn-primary {
     background: linear-gradient(
         135deg,
-        var(--color-primary),
-        var(--color-accent)
+        var(--color-secondary),
+        var(--color-secondary)
     );
     border: none;
     color: #fff;
@@ -47,11 +49,11 @@ body {
 }
 
 .btn-primary:hover {
-    background: linear-gradient(
+    /*background: linear-gradient(
         135deg,
         var(--color-accent),
         var(--color-secondary)
-    );
+    );*/
     transform: scale(1.03);
 }
 
@@ -66,7 +68,7 @@ body {
 }
 
 h3 {
-    color: var(--color-primary);
+    color: var(--color-secondary);
     font-weight: 600;
     letter-spacing: 0.5px;
 }
@@ -127,6 +129,7 @@ h3 {
 
 .card-body {
     padding: 20px;
+    background-color: var(--color-light);
 }
 
 .customer-info h6 {
@@ -164,3 +167,7 @@ h3 {
 .header-section{
 background-color: var(--color-primary) !important;
 color: white;}
+
+button {
+    white-space: nowrap;
+}

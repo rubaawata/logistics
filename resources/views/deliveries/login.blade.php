@@ -3,8 +3,12 @@
 @section('title', 'تسجيل دخول المندوبين')
 
 @section('content')
-    <div class="row justify-content-center align-items-center vh-100" dir="rtl">
-        <div class="col-md-4">
+    <div class="row justify-content-center align-items-center vh-100 m-0" dir="rtl">
+        <div class="col-md-4 ">
+            <div class="w-100 text-center"> 
+                <img height="100px" src="{{ asset('logo-white-background-with-slogan-.png') }}" alt="Delivery Login" class=" mb-4">
+            </div>
+            
             <div class="card shadow-lg p-4">
                 <h3 class="text-center mb-4">تسجيل دخول المندوب</h3>
 
