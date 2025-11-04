@@ -36,6 +36,8 @@ Route::get('/clear/cache', function () {
     return 'done';
 });
 
+//TODO
+Route::get('admin/export-delivery-report/{id}', [DeliveryDashboardController::class, 'report']);
 
 Route::prefix('delivery')->name('deliveries.')->group(function () {
     Route::get('/login', [DeliveriesLoginController::class, 'showLoginForm'])->name('login');

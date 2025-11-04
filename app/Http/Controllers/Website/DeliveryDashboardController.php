@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\Website;
 
 use App\Http\Controllers\Controller;
+use App\Models\Delivery;
+use App\Models\Package;
 use App\Services\DeliveryAuthService;
 use App\Services\ShipmentService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Mpdf\Mpdf;
 
 class DeliveryDashboardController extends Controller
 {
@@ -59,5 +63,18 @@ class DeliveryDashboardController extends Controller
     {
         $delivery = $this->authService->getAuthUser();
         return view('deliveries.profile', compact('delivery'));
+    }
+
+    // TODO
+    public function report($id){
+        $delivery = Delivery::where('id', '=', $id)->first();
+        $package = Package::where('delivery_id', $delivery->id)->whereDate('delivery_date', today())->with('Customer')->with('Seller')
+            ->get();
+        $data = [
+            'packages' => $package,
+            'delivery_name' => $delivery->name,
+            'report_date' => now()->format('Y-m-d H:i:s'),
+        ];
+        return view('pdf.delivery_report', $data);
     }
 }

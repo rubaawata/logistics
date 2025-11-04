@@ -1,12 +1,15 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\Delivery;
+use App\Models\Package;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\DB;
 use crocodicstudio\crudbooster\helpers\CRUDBooster;
 use crocodicstudio\crudbooster\controllers\CBController;
 use Illuminate\Support\Facades\Hash;
+use Mpdf\Mpdf;
 
 class AdminDeliveriesController extends CBController
 {
@@ -109,7 +112,18 @@ class AdminDeliveriesController extends CBController
 	        |
 	        */
         $this->addaction = array();
+        $this->addaction[] = [
+            'url'   => CRUDBooster::mainpath('export-delivery-report/[id]'),
+            'icon' => 'fa fa-file-pdf-o',
+            'color' => 'success',
+        ];
 
+        $this->addaction[] = [
+            'label'=>'show in local',
+            'url'   => 'export-delivery-report/[id]',
+            'icon'  => 'fa fa-file-excel-o',
+            'color' => 'success',
+        ];
 
         /*
 	        | ----------------------------------------------------------------------
@@ -377,5 +391,30 @@ class AdminDeliveriesController extends CBController
 
     //By the way, you can still create your own method in here... :)
 
+    public function getExportDeliveryReport($id)
+    {
+        $delivery = Delivery::where('id', '=', $id)->first();
+        $package = Package::where('delivery_id', $delivery->id)->whereDate('delivery_date', today())->with('Customer')->with('Seller')
+            ->get();
 
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'default_font' => 'dejavusans',
+            'format' => [200, 180],
+            'directionality' => 'rtl',
+        ]);
+        $data = [
+            'packages' => $package,
+            'delivery_name' => $delivery->name,
+            'report_date' => now()->format('Y-m-d H:i:s'),
+        ];
+
+
+        $html = view('pdf.delivery_report', $data)->render();
+
+        $mpdf->WriteHTML($html);
+
+        return response($mpdf->Output('', 'S'), 200)
+            ->header('Content-Type', 'application/pdf');
+    }
 }
