@@ -205,7 +205,30 @@
                                 <td>{{$item['delivery']['name']}}</td>
                                 <td>{{$item['area']['name']}}</td>
                                 <td>{{$item['location_text']}}</td>
-                                <td>{{ $status[$item['status']]}}</td>
+                                <td>
+                                    @php
+                                        $status_name = $status[$item['status']] ?? 'حالة غير معروفة';
+                                        $failure_details = '';
+
+                                        if ($item['status'] == 3 && (!empty($item['failure_reason']) || !empty($item['custom_reason']) || !empty($item['reschedule_date']))) {
+
+                                            if (!empty($item['failure_reason'])) {
+                                                $failure_details .= ' (السبب: ' . $item['failure_reason'] . ')';
+                                            }
+
+                                            if (!empty($item['custom_reason'])) {
+                                                $failure_details .= ' | (ملاحظات المندوب: ' . $item['custom_reason'] . ')';
+                                            }
+
+                                            if (!empty($item['reschedule_date'])) {
+                                                $reschedule_date = date('Y-m-d', strtotime($item['reschedule_date']));
+                                                $failure_details .= ' | (تمت إعادة الجدولة: ' . $reschedule_date . ')';
+                                            }
+                                        }
+                                        $status_name = $status_name . " " . $failure_details;
+                                    @endphp
+                                    {{$status_name}}
+                                </td>
                                 <td>{{$item['delivery_cost']}}</td>
                                 <td>{{$item['delivery_date']}}</td>
                                 <td>{{$item['package_cost']}}</td>
