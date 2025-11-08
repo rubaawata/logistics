@@ -112,15 +112,16 @@ class AdminSellersController extends CBController
             'url'   => CRUDBooster::mainpath('export-seller-report/[id]'),
             'icon' => 'fa fa-file-pdf-o',
             'color' => 'success',
+            'target' => '_blank',
         ];
 
         //TODO
-        $this->addaction[] = [
+        /*$this->addaction[] = [
             'label' => 'show in local',
             'url'   => 'export-seller-report/[id]',
             'icon'  => 'fa fa-file-excel-o',
             'color' => 'success',
-        ];
+        ];*/
 
         /*
 	        | ----------------------------------------------------------------------
@@ -404,7 +405,7 @@ class AdminSellersController extends CBController
         $data = [
             'packages' => $package,
             'seller_name' => $seller->seller_name,
-            'report_date' => now()->format('Y-m-d H:i:s'),
+            'report_date' => now()->format('Y-m-d'),
         ];
 
 

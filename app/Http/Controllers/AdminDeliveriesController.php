@@ -116,14 +116,15 @@ class AdminDeliveriesController extends CBController
             'url'   => CRUDBooster::mainpath('export-delivery-report/[id]'),
             'icon' => 'fa fa-file-pdf-o',
             'color' => 'success',
+            'target' => '_blank',
         ];
 
-        $this->addaction[] = [
+        /*$this->addaction[] = [
             'label'=>'show in local',
             'url'   => 'export-delivery-report/[id]',
             'icon'  => 'fa fa-file-excel-o',
             'color' => 'success',
-        ];
+        ];*/
 
         /*
 	        | ----------------------------------------------------------------------
@@ -406,7 +407,7 @@ class AdminDeliveriesController extends CBController
         $data = [
             'packages' => $package,
             'delivery_name' => $delivery->name,
-            'report_date' => now()->format('Y-m-d H:i:s'),
+            'report_date' => now()->format('Y-m-d'),
         ];
 
 
