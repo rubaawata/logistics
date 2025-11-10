@@ -322,7 +322,7 @@
                 <input type="hidden" name="package_id_delivery" id="package_id_delivery">
                 <div class="mb-3">
                     <label for="delivery_id" class="form-label">اختر مندوب جديد</label>
-                    <select class="form-control" id="delivery_id" data-value="" required="" name="delivery_id">
+                    <select class="form-control" id="package_delivery_id" data-value="" required="" name="package_delivery_id">
                         <option value="">** رجاءً اختر مندوب</option>
                         @foreach ($deliveries as $item)
                             <option value="{{$item['id']}}">{{$item['name']}}</option>
@@ -477,14 +477,14 @@
             $('#package_id_delivery').val(package_id);
             $('#responseMessageDelivery').text('');
             $('#responseErrorDelivery').text('');
-            $('#delivery_id').val(old_delivery);
+            $('#package_delivery_id').val(old_delivery);
             $('#deliveryModal').modal('show');
         }
 
         function updatePackageDelivery() {
             showSpinner();
             package_id = document.getElementById('package_id_delivery').value;
-            delivery_id = document.getElementById('delivery_id').value;
+            delivery_id = document.getElementById('package_delivery_id').value;
             $.ajax({
                 url: '/admin/update-package-delivery',
                 type: 'POST',
