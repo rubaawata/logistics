@@ -110,7 +110,7 @@
                                             </a>
                                         </div>
                                         <div class="col-6">
-                                            <button onclick="redirectToWhatsApp('{{ $shipment->customer->phone_number }}')"
+                                            <button onclick="redirectToWhatsApp('{{ $shipment->customer->phone_number }}', '{{ $shipment->customer->name }}', {{ $shipment->package_cost + $shipment->delivery_cost }})"
                                                 target="_blank" class="btn btn-whatsapp w-100">
                                                 <i class="fab fa-whatsapp"></i> واتساب
                                             </button>
@@ -342,11 +342,13 @@
         </script>
 
         <script>
-            function redirectToWhatsApp(phoneNumber) {
+            function redirectToWhatsApp(phoneNumber, name, price) {
                 phoneNumber = '+963' + phoneNumber;
-                const message = 'مرحباً'; // Optional pre-filled message
+
+                const message = `مرحباً ${name}، مندوب تواريد يتواصل معك لايصال شحنتك بقيمة ${price} ليرة سوري`;
+
                 const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-                
+
                 window.open(url, '_blank');
             }
         </script>
