@@ -34,10 +34,11 @@ class DeliveryDashboardController extends Controller
     public function markAsDelivered(Request $request, $shipmentId)
     {
         $validated = $request->validate([
-            'total_cost' => 'required|numeric'
+            'total_cost' => 'required|numeric',
+            'delivered_pieces_count' => 'required|integer|min:1'
         ]);
-        $this->shipmentService->validateTotalCost($shipmentId, $request->total_cost);
-        $this->shipmentService->markAsDelivered($shipmentId, $validated['total_cost']);
+        //$this->shipmentService->validateTotalCost($shipmentId, $request->total_cost);
+        $this->shipmentService->markAsDelivered($shipmentId, $validated['total_cost'], $validated['delivered_pieces_count']);
         return response()->json([
             'success' => true,
             'message' => 'تم تحديث حالة الشحنة وإزالتها من القائمة بنجاح.',

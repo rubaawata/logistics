@@ -147,23 +147,9 @@ class AdminController extends CBController
             $delivery = [];
             $delivery['name'] = $item['name'];
             $delivery['phone_number'] = $item['phone_number'];
-
-            $total_amount = 0;
-            $delivered_package_count = 0;
-            $undelivered_package_count = 0;
-            foreach ($item['packages'] as $package) {
-                if ($package['status'] != 'Delivered') {
-                    $undelivered_package_count++;
-                } else {
-                    $delivered_package_count++;
-                    $total_amount += $package['delivery_cost'] + $package['package_cost'];
-                }
-
-            }
-
-            $delivery['total_amount'] = $total_amount;
-            $delivery['delivered_package_count'] = $delivered_package_count;
-            $delivery['undelivered_package_count'] = $undelivered_package_count;
+            $delivery['total_pieces_count'] = $item['packages']->sum('pieces_count');
+            $delivery['remaining_pieces'] = $item['packages']->sum('pieces_count') - $item['packages']->where('status', '1')->sum('delivered_pieces_count');
+            $delivery['total_amount'] = $item['packages']->sum('paid_amount');
 
             $delivery_workers[] = $delivery;
         }

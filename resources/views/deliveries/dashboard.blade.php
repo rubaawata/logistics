@@ -158,6 +158,16 @@
                                             <input type="number" step="0.01" name="total_cost" class="form-control"
                                                 required placeholder="أدخل المبلغ الإجمالي الذي تم تحصيله">
                                         </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold text-dark">
+                                                عدد قطع الشحنة:
+                                                {{ $shipment->pieces_count }}
+                                                الزبون استلم؟
+                                            </label>
+                                            <input type="number" step="0.01" name="delivered_pieces_count" class="form-control"
+                                                required placeholder="أدخل عدد القطع التي استلمها الزبون">
+                                        </div>
                                     </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary"
@@ -192,6 +202,7 @@
                                                 <option value="no_answer">العميل لم يرد على المندوب</option>
                                                 <option value="refused">العميل رفض الاستلام</option>
                                                 <option value="rescheduled">العميل قام بتأجيل الشحنة</option>
+                                                <option value="rto">RTO</option>
                                                 <option value="other">سبب آخر</option>
                                             </select>
                                         </div>

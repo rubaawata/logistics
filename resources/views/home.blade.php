@@ -189,9 +189,9 @@
                             <th>المنطقة</th>
                             <th>العنوان</th>
                             <th>الحالة</th>
-                            <th>كلفة الشحن</th>
-                            <th>سعر الشحنة</th>
                             <th>تاريخ التوصيل</th>
+                            <th>سعر الشحنة</th>
+                            <th>كلفة الشحن</th>
                             <th>العمليات</th>
                         </tr>
                     </thead>
@@ -213,7 +213,7 @@
                                         if ($item['status'] == 3 && (!empty($item['failure_reason']) || !empty($item['custom_reason']) || !empty($item['reschedule_date']))) {
 
                                             if (!empty($item['failure_reason'])) {
-                                                $failure_details .= ' (السبب: ' . $item['failure_reason'] . ')';
+                                                $failure_details .= ' (السبب: ' . getReasonMessage($item['failure_reason']) . ')';
                                             }
 
                                             if (!empty($item['custom_reason'])) {
@@ -229,9 +229,10 @@
                                     @endphp
                                     {{$status_name}}
                                 </td>
-                                <td>{{$item['delivery_cost']}}</td>
                                 <td>{{$item['delivery_date']}}</td>
                                 <td>{{$item['package_cost']}}</td>
+                                <td>{{$item['delivery_cost']}}</td>
+                                
                                 <td>
                                     <button class="btn btn-xs btn-success btn-edit" onclick="updatePackageStatusModal({{$item['id']}}, '{{$item['status']}}')">تعديل الحالة</button>
                                     <button class="btn btn-xs btn-warning btn-edit" onclick="updatePackageDeliveryInfoModal({{$item['id']}}, '{{$item['location_text']}}', '{{$item['location_link']}}', '{{$item['delivery_date']}}')">تعديل الشحنة</button>
@@ -257,9 +258,9 @@
                         <tr>
                             <th>اسم المندوب</th>
                             <th>رقم الهاتف</th>
-                            <th>عدد الشحنات الموصلة</th>
-                            <th>عدد الشحنات الغير الموصلة</th>
-                            <th>المبلغ الكلي</th>
+                            <th>عدد القطع الكلي</th>
+                            <th>عدد القطع المتبقية</th>
+                            <th>المبلغ المستلم</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -267,8 +268,8 @@
                             <tr>
                                 <td>{{$item['name']}}</td>
                                 <td>{{$item['phone_number']}}</td>
-                                <td>{{$item['delivered_package_count']}}</td>
-                                <td>{{$item['undelivered_package_count']}}</td>
+                                <td>{{$item['total_pieces_count']}}</td>
+                                <td>{{$item['remaining_pieces']}}</td>
                                 <td>{{$item['total_amount']}}</td>
                             </tr>
                         @endforeach

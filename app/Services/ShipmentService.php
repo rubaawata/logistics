@@ -19,10 +19,12 @@ class ShipmentService
         return $this->repository->getTodayAssignedShipments($deliveryId);
     }
 
-    public function markAsDelivered($shipmentId, $totalCost)
+    public function markAsDelivered($shipmentId, $totalCost, $deliveredPiecesCount)
     {
         return $this->repository->updateShipmentStatus($shipmentId, 1, [
-            'receipt_date' => now()
+            'receipt_date' => now(),
+            'paid_amount' => $totalCost,
+            'delivered_pieces_count' => $deliveredPiecesCount
         ]);
     }
 
@@ -36,10 +38,15 @@ class ShipmentService
 
     public function markAsFailed($shipmentId, $data)
     {
+        $paidAmount = 0;
+        if($data['reason'] != 'rto') {
+            $paidAmount = $this->repository->getDeliveryCost($shipmentId);
+        }
         return $this->repository->updateShipmentStatus($shipmentId, 3, [
             'failure_reason' => $data['reason'],
             'reschedule_date' => $data['new_date'] ?? null,
-            'custom_reason' => $data['custom_reason'] ?? null
+            'custom_reason' => $data['custom_reason'] ?? null,
+            'paid_amount' => $paidAmount,
         ]);
     }
 }

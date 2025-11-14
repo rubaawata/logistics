@@ -28,4 +28,10 @@ class ShipmentRepository
         $pakcage = Package::where('id', $shipmentId)->first();
         return $pakcage->package_cost + $pakcage->delivery_cost;
     }
+
+    public function getDeliveryCost($shipmentId)
+    {
+        $pakcage = Package::where('id', $shipmentId)->first();
+        return $pakcage->delivery_cost;
+    }
 }

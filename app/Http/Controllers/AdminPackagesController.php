@@ -81,7 +81,7 @@ class AdminPackagesController extends CBController
                 if ($row->status == 3 && (!empty($row->failure_reason) || !empty($row->custom_reason) || !empty($row->reschedule_date))) {
 
                     if (!empty($row->failure_reason)) {
-                        $failure_details .= ' (السبب: ' . $row->failure_reason . ')';
+                        $failure_details .= ' (السبب: ' .  getReasonMessage($row->failure_reason) . ')';
                     }
 
                     if (!empty($row->custom_reason)) {
@@ -98,6 +98,8 @@ class AdminPackagesController extends CBController
         ];
 
         $this->col[] = ["label" => "عدد محاولات التوصيل", "name" => "number_of_attempts"];
+        $this->col[] = ["label" => "المبلغ المقبوض", "name" => "paid_amount"];
+        $this->col[] = ["label" => "عدد القطع المسلمة", "name" => "delivered_pieces_count"];
         # END COLUMNS DO NOT REMOVE THIS LINE
 
         # START FORM DO NOT REMOVE THIS LINE
