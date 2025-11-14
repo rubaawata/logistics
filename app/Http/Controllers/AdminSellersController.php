@@ -116,13 +116,13 @@ class AdminSellersController extends CBController
         ];
 
         //TODO
-        $this->addaction[] = [
+        /*$this->addaction[] = [
             'label' => 'show in local',
             'url'   => 'export-seller-report/[id]',
             'icon'  => 'fa fa-file-excel-o',
             'color' => 'success',
             'target' => '_blank',
-        ];
+        ];*
 
         /*
 	        | ----------------------------------------------------------------------

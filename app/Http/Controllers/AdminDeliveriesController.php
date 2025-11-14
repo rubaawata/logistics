@@ -119,13 +119,13 @@ class AdminDeliveriesController extends CBController
             'target' => '_blank',
         ];
 
-        $this->addaction[] = [
+        /*$this->addaction[] = [
             'label'=>'show in local',
             'url'   => 'export-delivery-report/[id]',
             'icon'  => 'fa fa-file-excel-o',
             'color' => 'success',
             'target' => '_blank',
-        ];
+        ];*/
 
         /*
 	        | ----------------------------------------------------------------------

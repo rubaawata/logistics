@@ -50,7 +50,8 @@ class DeliveryDashboardController extends Controller
         $validated = $request->validate([
             'reason' => 'required|string',
             'new_date' => 'nullable|date',
-            'custom_reason' => 'nullable|string'
+            'custom_reason' => 'nullable|string',
+            'cancel_total_cost' => 'required|numeric',
         ]);
 
         if($validated['reason'] === 'rescheduled') {

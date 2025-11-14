@@ -199,6 +199,16 @@
                                         <p>الشحنة #{{ $shipment->id }} - **{{ $shipment->customer->name }}**</p>
 
                                         <div class="mb-3">
+                                            <label class="form-label fw-bold text-dark">
+                                                مبلغ التوصيل
+                                                {{ $shipment->delivery_cost }}
+                                            </label>
+                                            <input type="number" step="0.01" name="cancel_total_cost" class="form-control"
+                                                required placeholder="أدخل المبلغ الإجمالي الذي تم تحصيله" value="0">
+                                        </div>
+
+
+                                        <div class="mb-3">
                                             <label class="form-label fw-bold text-dark">سبب التعذر</label>
                                             <select name="reason" class="form-select" required
                                                 onchange="toggleReasonFields(this, {{ $shipment->id }})">

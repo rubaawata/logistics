@@ -38,15 +38,15 @@ class ShipmentService
 
     public function markAsFailed($shipmentId, $data)
     {
-        $paidAmount = 0;
+        /*$paidAmount = 0;
         if($data['reason'] != 'rto') {
             $paidAmount = $this->repository->getDeliveryCost($shipmentId);
-        }
+        }*/
         return $this->repository->updateShipmentStatus($shipmentId, 3, [
             'failure_reason' => $data['reason'],
             'reschedule_date' => $data['new_date'] ?? null,
             'custom_reason' => $data['custom_reason'] ?? null,
-            'paid_amount' => $paidAmount,
+            'paid_amount' => $data['cancel_total_cost'],
         ]);
     }
 
