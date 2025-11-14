@@ -53,8 +53,12 @@ class DeliveryDashboardController extends Controller
             'custom_reason' => 'nullable|string'
         ]);
 
-        $this->shipmentService->markAsFailed($shipmentId, $validated);
-
+        if($validated['reason'] === 'rescheduled') {
+            $this->shipmentService->markAsDelayed($shipmentId, $validated);
+        } else {
+            $this->shipmentService->markAsFailed($shipmentId, $validated);
+        }
+        
         return response()->json([
             'success' => true,
             'message' => 'تم الإبلاغ عن تعذر التوصيل.',

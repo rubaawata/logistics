@@ -81,6 +81,7 @@
                 <th>عدد المنتجات</th>
                 <th>المبلغ المستحق</th>
                 <th>أجور التوصيل</th>
+                <th>المبلغ المستلم من العميل</th>
             </tr>
         </thead>
         <tbody>
@@ -93,6 +94,7 @@
                     <td>{{ $package->pieces_count ?? '---' }}</td>
                     <td>{{ number_format($package->package_cost ?? 0) }}</td>
                     <td>{{ number_format($package->delivery_cost ?? 0) }}</td>
+                    <td>{{ number_format($package->paid_amount ?? 0) }}</td>
                 </tr>
             @endforeach
 
@@ -100,11 +102,12 @@
                 <td colspan="5">المجموع</td>
                 <td>{{ number_format($packages->sum('package_cost')) }}</td>
                 <td>{{ number_format($packages->sum('delivery_cost')) }}</td>
+                <td>{{ number_format($packages->sum('paid_amount')) }}</td>
             </tr>
         </tbody>
     </table>
 
-    @php
+    {{--@php
         $total_package_cost = $packages->sum('package_cost');
         $total_delivery_cost = $packages->sum('delivery_cost');
         $grand_total = $total_package_cost + $total_delivery_cost;
@@ -123,7 +126,7 @@
             <td class="label">المجموع الكلي</td>
             <td><strong>{{ number_format($grand_total) }}</strong></td>
         </tr>
-    </table>
+    </table>--}}
 
 </body>
 </html>

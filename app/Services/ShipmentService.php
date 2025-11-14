@@ -49,4 +49,12 @@ class ShipmentService
             'paid_amount' => $paidAmount,
         ]);
     }
+
+    public function markAsDelayed($shipmentId, $data)
+    {
+        return $this->repository->updateShipmentStatus($shipmentId, 5, [
+            'reschedule_date' => $data['new_date'] ?? null,
+            'delivery_date' => $data['new_date'] ?? null,
+        ]);
+    }
 }

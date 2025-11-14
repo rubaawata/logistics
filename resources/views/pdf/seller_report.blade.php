@@ -79,6 +79,7 @@
                 <th>نوع المنتج</th>
                 <th>الحالة</th>
                 <th>عدد المنتجات</th>
+                <th>عدد المنتجات الموصلة</th>
                 <th>المبلغ المستحق</th>
                 <th>أجور التوصيل</th>
             </tr>
@@ -91,20 +92,29 @@
                     <td>{{ $package->product_type ?? '---' }}</td>
                     <td>{{ getPackageStatus($package->status) ?? '---' }}</td>
                     <td>{{ $package->pieces_count ?? '---' }}</td>
-                    <td>{{ number_format($package->package_cost ?? 0) }}</td>
-                    <td>{{ number_format($package->delivery_cost ?? 0) }}</td>
+                    <td>{{ $package->delivered_pieces_count ?? '---' }}</td>
+                    <td>
+                        @if($package->status == 1)
+                            {{ number_format($package->paid_amount - $package->delivery_cost ?? 0) }}
+                        @endif
+                    </td>
+                    <td>
+                        @if($package->status == 1)
+                            {{ number_format($package->delivery_cost ?? 0) }}
+                        @endif
+                    </td>
                 </tr>
             @endforeach
 
             <tr class="total-row">
-                <td colspan="5">المجموع</td>
-                <td>{{ number_format($packages->sum('package_cost')) }}</td>
-                <td>{{ number_format($packages->sum('delivery_cost')) }}</td>
+                <td colspan="6">المجموع</td>
+                <td>{{ number_format($packages->where('status', 1)->sum(fn($p) => $p->paid_amount - $p->delivery_cost)) }}</td>
+                <td>{{ number_format($packages->where('status', 1)->sum('delivery_cost')) }}</td>
             </tr>
         </tbody>
     </table>
 
-    @php
+    {{--@php
         $total_package_cost = $packages->sum('package_cost');
         $total_delivery_cost = $packages->sum('delivery_cost');
         $grand_total = $total_package_cost + $total_delivery_cost;
@@ -123,7 +133,7 @@
             <td class="label">المجموع الكلي</td>
             <td><strong>{{ number_format($grand_total) }}</strong></td>
         </tr>
-    </table>
+    </table>--}}
 
 </body>
 </html>

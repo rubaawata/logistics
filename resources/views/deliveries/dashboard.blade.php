@@ -81,6 +81,10 @@
                                     <p class="mb-1 text-muted">
                                         عدد القطع : {{ $shipment->pieces_count }}
                                     </p>
+
+                                    <p class="mb-1 text-muted">
+                                        السعر: {{ $shipment->package_cost + $shipment->delivery_cost }}
+                                    </p>
                                 </div>
 
                                 <div class="address-info mb-3">
@@ -314,6 +318,9 @@
                 $(newDateField).hide().find('input').removeAttr('required');
                 $(customReasonField).hide().find('textarea').removeAttr('required');
 
+                $(newDateField).hide().find('input').val('');
+                $(customReasonField).hide().find('textarea').val('');
+
                 if (reason === 'rescheduled') {
                     $(newDateField).show().find('input').attr('required', 'required');
                 } else if (reason === 'other') {
@@ -337,7 +344,7 @@
         <script>
             function redirectToWhatsApp(phoneNumber) {
                 phoneNumber = '+963' + phoneNumber;
-                const message = 'مرحباً، أنا مندوب التوصيل'; // Optional pre-filled message
+                const message = 'مرحباً'; // Optional pre-filled message
                 const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
                 
                 window.open(url, '_blank');
