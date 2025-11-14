@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use crocodicstudio\crudbooster\helpers\CRUDBooster;
 use crocodicstudio\crudbooster\controllers\CBController;
 use Illuminate\Support\Carbon;
+use Carbon\CarbonPeriod;
 
 use App\Models\Package;
 use App\Models\Delivery;
@@ -180,7 +181,7 @@ class AdminController extends CBController
             $delivered_package_count = 0;
             $undelivered_package_count = 0;
             foreach ($item['packages'] as $package) {
-                if ($package['status'] != 'Delivered') {
+                if ($package['status'] != 1) {
                     $undelivered_package_count++;
                 } else {
                     $delivered_package_count++;
@@ -268,7 +269,7 @@ class AdminController extends CBController
                     'location_text' => $location_text,
                     'location_link' => $location_link,
                     'delivery_date' => $delivery_date,
-                    'status' => 'Changed'
+                    'status' => 4 // Modified status
                 ]);
             if ($updated) {
                 return response()->json([
@@ -288,7 +289,7 @@ class AdminController extends CBController
         }
     }
 
-    public function getPackagesCountReport(Request $request)  {
+    /*public function getPackagesCountReport1(Request $request)  {
 
         $month = $request->input('month');
 
@@ -333,6 +334,95 @@ class AdminController extends CBController
         }
 
         return view('delivery_reports.packages_count_report', compact('deliveries', 'selected_month', 'months'));
+    }*/
+
+    public function getPackagesCountReport(Request $request)
+    {
+        // -------------------------------------
+        // 1) Date range: from Jan 1, 2025 to today
+        // -------------------------------------
+        $startDate = Carbon::create(2025, 1, 1);
+        $endDate = Carbon::now();
+
+        // -------------------------------------
+        // 2) Generate all Thursdays between the range
+        // -------------------------------------
+        $thursdays = [];
+        $period = CarbonPeriod::create($startDate, $endDate);
+
+        foreach ($period as $date) {
+            if ($date->isThursday()) {
+                $thursdays[] = $date->format('Y-m-d');
+            }
+        }
+
+        // -------------------------------------
+        // 3) Determine the selected Thursday
+        // -------------------------------------
+        $selectedThursday = $request->input('week') ?? end($thursdays); // latest Thursday
+        $selectedThursday = Carbon::parse($selectedThursday);
+
+        // -------------------------------------
+        // 4) Week range: Thursday → previous 6 days
+        // -------------------------------------
+        $weekStart = $selectedThursday->copy()->subDays(6);   // older day
+        $weekEnd = $selectedThursday->copy();                 // Thursday is the final day
+
+        // -------------------------------------
+        // 5) Get delivery agents
+        // -------------------------------------
+        $deliveriesData = Delivery::all();
+        $deliveries = [];
+
+        // -------------------------------------
+        // 6) Weekly report (Thu backward 6 days)
+        // -------------------------------------
+        foreach ($deliveriesData as $item) {
+
+            // Count all packages within week range
+            $total_packages = DB::table('packages')
+                ->whereBetween('delivery_date', [$weekStart, $weekEnd])
+                ->where('delivery_id', $item->id)
+                ->count();
+
+            // Delivered packages (status 1)
+            $total_delivered_packages = DB::table('packages')
+                ->whereBetween('delivery_date', [$weekStart, $weekEnd])
+                ->where('delivery_id', $item->id)
+                ->where('status', '1')
+                ->count();
+
+            // Not delivered = total - delivered
+            $total_none_delivered_packages = $total_packages - $total_delivered_packages;
+
+            $total_amount = DB::table('packages')
+                                ->whereBetween('delivery_date', [$weekStart, $weekEnd])
+                                ->where('delivery_id', $item->id)
+                                ->where('paid_amount', '>', 0)
+                                ->sum('delivery_cost');
+
+            $deliveries[] = [
+                'id' => $item->id,
+                'name' => $item->name,
+                'total_packages' => $total_packages,
+                'total_delivered_packages' => $total_delivered_packages,
+                'total_none_delivered_packages' => $total_none_delivered_packages,
+                'total_amount' => $total_amount
+            ];
+        }
+
+        // -------------------------------------
+        // 7) Return to view
+        // -------------------------------------
+        return view('delivery_reports.packages_count_report', [
+            'deliveries' => $deliveries,
+            'thursdays' => $thursdays,
+            'weekStart' => $weekStart->format('Y-m-d'),
+            'weekEnd' => $weekEnd->format('Y-m-d'),
+            'selectedThursday' => $selectedThursday->format('Y-m-d'),
+        ]);
     }
+
+
 
 }

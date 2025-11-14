@@ -34,19 +34,22 @@
                         <div class="col-lg-6">
                             <div class="form-group form-datepicker header-group-0 " id="form-group-delivery_date" style="">
                                 <label class="control-label col-sm-4">
-                                    الشهر
+                                    الأسبوع الذي ينتهي في يوم الخميس
                                 </label>
                                 <div class="col-sm-8">
                                     <div class="input-group" style='width:100%'>
-                                        <select style='width:100%' class='form-control select2' id="month" name="month">
-                                            @foreach ($months as $item)
-                                                <option {{$selected_month == $item ? 'selected' : ''}} value="{{$item}}">{{$item}}</option>
+                                        <select style='width:100%' class='form-control select2' id="week" name="week">
+                                            @foreach ($thursdays as $item)
+                                                <option {{$selectedThursday == $item ? 'selected' : ''}} value="{{$item}}">{{$item}}</option>
                                             @endforeach
                                         </select>
                                     </div>
                                     <p class="help-block"></p>
                                 </div>
                             </div>
+                        </div>
+                        <div class="col-lg-6" style="text-align: end">
+                            <button class="btn btn-sm btn-success btn-edit" type="submit">بحث</button>
                         </div>
                     </div>
                 </div> 
@@ -66,6 +69,7 @@
                             <th>عدد الشحنات الكلي</th>
                             <th>عدد الشحنات الموصلة</th>
                             <th>عدد الشحنات الغير الموصلة</th>
+                            <th>مبلغ التوصيل الكلي</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -75,6 +79,7 @@
                                 <td>{{$item['total_packages']}}</td>
                                 <td>{{$item['total_delivered_packages']}}</td>
                                 <td>{{$item['total_none_delivered_packages']}}</td>
+                                <td>{{$item['total_amount']}}</td>
                                 <!--<td>
                                     <a class="btn btn-xs btn-success btn-edit" href="admin/reports/packages-count-report/{{$item['id']}}/{{$selected_month}}" target="_blank">التفاصيل</a>
                                 </td>-->
