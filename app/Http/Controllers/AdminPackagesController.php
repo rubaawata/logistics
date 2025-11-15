@@ -111,7 +111,7 @@ class AdminPackagesController extends CBController
         $this->form[] = ['label' => "تكلفة التوصيل", 'name' => 'delivery_cost', 'type' => 'number', 'validation' => 'required|integer|min:0', 'width' => 'col-sm-10'];
         $this->form[] = ['label' => 'سعر الشحنة', 'name' => 'package_cost', 'type' => 'number', 'validation' => 'required|integer|min:0', 'width' => 'col-sm-10'];
         $this->form[] = ['label' => 'الحالة', 'name' => 'status', 'type' => 'select', 'validation' => 'required|min:1|max:255', 'width' => 'col-sm-10', 'dataenum' => $this->getPackageStatus()];
-        $this->form[] = ['label' => 'عدد محاولات التوصيل', 'name' => 'number_of_attempts', 'type' => 'number', 'validation' => 'required|integer|min:0', 'width' => 'col-sm-10'];
+        //$this->form[] = ['label' => 'عدد محاولات التوصيل', 'name' => 'number_of_attempts', 'type' => 'number', 'validation' => 'required|integer|min:0', 'width' => 'col-sm-10'];
         $this->form[] = ['label' => 'تاريخ التوصيل', 'name' => 'delivery_date', 'type' => 'date', 'validation' => 'required|date', 'width' => 'col-sm-10'];
         $this->form[] = ['label' => 'تاريخ الاستلام', 'name' => 'receipt_date', 'type' => 'date', 'validation' => 'required|date', 'width' => 'col-sm-10'];
         $this->form[] = ['label' => 'رابط العنوان', 'name' => 'location_link', 'type' => 'text', 'validation' => 'required|min:1|max:255', 'width' => 'col-sm-10'];
@@ -351,7 +351,7 @@ class AdminPackagesController extends CBController
     public function hook_before_add(&$postdata)
     {
         //Your code here
-
+        $postdata['delivery_date_1'] = $postdata['delivery_date'];
     }
 
     /*

@@ -1,10 +1,15 @@
 <?php
 if (!function_exists('getPackageStatus')) {
-    function getPackageStatus($status)
+    function getPackageStatus($status, $delivery_date = null)
     {
         $status = (int) $status;
         $statuses = config('constants.PACKAGE_STATUS');
-        return $statuses[$status] ?? 'غير معروف';
+        $statusName = $statuses[$status] ?? 'غير معروف';
+        $today = today()->toDateString();
+        if($delivery_date && $status === 5 && $delivery_date != $today) {
+            return 'مؤجلة';
+        }
+        return $statusName;
     }
 }
 
@@ -22,6 +27,8 @@ if (!function_exists('getReasonMessage')) {
                 return 'RTO';
             case 'other':
                 return 'سبب آخر';
+            case 'too_many_attempts':
+                return 'تم إلغاء الشحنة بعد محاولات تسليم متعددة';
             default:
                 return 'غير معروف';
         }

@@ -34,4 +34,31 @@ class ShipmentRepository
         $pakcage = Package::where('id', $shipmentId)->first();
         return $pakcage->delivery_cost;
     }
+
+    public function saveOldDeliveryDate($shipmentId, $oldDate)
+    {
+        $package = Package::where('id', $shipmentId)->first();
+        $canceled = false;
+        switch($package->number_of_attempts) {
+            case 0:
+                $package->delivery_date_1 = $package->delivery_date;
+                break;
+            case 1:
+                $package->delivery_date_2 = $package->delivery_date;
+                break;
+            case 2:
+                $package->delivery_date_3 = $package->delivery_date;
+                break;
+            default:
+                $canceled = true;
+                $package->status = 3; // Cancelled
+                $package->failure_reason = 'too_many_attempts';
+                break;
+        }
+        $package->number_of_attempts += 1;
+        $package->save();
+
+        return $canceled;
+    }
+
 }

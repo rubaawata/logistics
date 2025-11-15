@@ -43,7 +43,7 @@
         </div>
     </div>
 
-    <div class="container">
+    <div class="container pb-5">
         <div id="alert-container">
             @if (session('success'))
                 <div class="alert alert-success alert-dismissible fade show text-end" role="alert">
@@ -258,6 +258,10 @@
         @endif
     </div>
 
+    <div class="refresh-btn" onclick="refreshPage()">
+       تحديث
+    </div>
+
     @push('scripts')
         <script>
             function displayAlert(message, type) {
@@ -355,11 +359,17 @@
             function redirectToWhatsApp(phoneNumber, name, price) {
                 phoneNumber = '+963' + phoneNumber;
 
-                const message = `مرحباً ${name}، مندوب تواريد يتواصل معك لايصال شحنتك بقيمة ${price} ليرة سوري`;
+                const message = `مرحباً ${name}، مندوب طواريد يتواصل معك لايصال شحنتك بقيمة ${price} ليرة سوري`;
 
                 const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
                 window.open(url, '_blank');
+            }
+        </script>
+
+        <script>
+            function refreshPage() {
+                location.reload();
             }
         </script>
     @endpush

@@ -15,9 +15,16 @@ use App\Models\Delivery;
 use App\Models\Seller;
 use App\Models\Area;
 use App\Models\Customer;
+use App\Services\ShipmentService;
 
 class AdminController extends CBController
 {
+    protected ShipmentService $shipmentService;
+
+    public function __construct(ShipmentService $shipmentService)
+    {
+        $this->shipmentService = $shipmentService;
+    }
 
     public function getHome(Request $request)
     {
@@ -58,15 +65,28 @@ class AdminController extends CBController
         $delivery_workers = $this->getDeliveryDailyReport($selected_date_from, $selected_date_to);
         //$sellers = $this->getSellerDailyReport($selected_date);
         //$packages = $this->getTodayPackages($selected_date);
-        $packages = Package::whereDate('delivery_date', '>=', $selected_date_from)
-            ->with(['Seller', 'Customer', 'Delivery', 'Area']);
+        $packages = Package::with(['Seller', 'Customer', 'Delivery', 'Area'])
+                            ->where(function ($q) use ($selected_date_from, $selected_date_to) {
 
+            $start = Carbon::parse($selected_date_from)->startOfDay();
 
-        if (!is_null($selected_date_to) && $selected_date_to !== 'null') {
-            
-            $selected_date_to = Carbon::parse($selected_date_to)->endOfDay();
-            $packages->where('delivery_date', '<=', $selected_date_to);
-        }
+            $end = $selected_date_to 
+                ? Carbon::parse($selected_date_to)->endOfDay()
+                : null;
+
+            if ($end) {
+                $q->whereBetween('delivery_date', [$start, $end])
+                ->orWhereBetween('delivery_date_1', [$start, $end])
+                ->orWhereBetween('delivery_date_2', [$start, $end])
+                ->orWhereBetween('delivery_date_3', [$start, $end]);
+            } else {
+                $q->where('delivery_date', '>=', $start)
+                ->orWhere('delivery_date_1', '>=', $start)
+                ->orWhere('delivery_date_2', '>=', $start)
+                ->orWhere('delivery_date_3', '>=', $start);
+            }
+        });
+
 
         if (!is_null($selected_area) && $selected_area !== 'null') {
             $packages->whereHas('Area', function ($query) use ($selected_area) {
@@ -127,20 +147,56 @@ class AdminController extends CBController
     private function getDeliveryDailyReport($selected_date_from, $selected_date_to)
     {
         $delivery_workers_data = Delivery::whereHas('packages', function ($query) use ($selected_date_from, $selected_date_to) {
-            $query->whereDate('delivery_date', '>=', $selected_date_from);
-            if (!is_null($selected_date_to) && $selected_date_to !== 'null') {
-                $query->where('delivery_date', '<=', $selected_date_to);
-            }
+    
+            $start = Carbon::parse($selected_date_from)->startOfDay();
+            $end = (!is_null($selected_date_to) && $selected_date_to !== 'null')
+                ? Carbon::parse($selected_date_to)->endOfDay()
+                : null;
+
+            $query->where(function ($q) use ($start, $end) {
+
+                if ($end) {
+                    // أي تاريخ داخل المدى
+                    $q->whereBetween('delivery_date', [$start, $end])
+                    ->orWhereBetween('delivery_date_1', [$start, $end])
+                    ->orWhereBetween('delivery_date_2', [$start, $end])
+                    ->orWhereBetween('delivery_date_3', [$start, $end]);
+                } else {
+                    // فقط start بدون end
+                    $q->where('delivery_date', '>=', $start)
+                    ->orWhere('delivery_date_1', '>=', $start)
+                    ->orWhere('delivery_date_2', '>=', $start)
+                    ->orWhere('delivery_date_3', '>=', $start);
+                }
+            });
+
         })
         ->with([
             'packages' => function ($query) use ($selected_date_from, $selected_date_to) {
-                $query->whereDate('delivery_date', $selected_date_from);
-                if (!is_null($selected_date_to) && $selected_date_to !== 'null') {
-                    $query->where('delivery_date', '<=', $selected_date_to);
-                }
+
+                $start = Carbon::parse($selected_date_from)->startOfDay();
+                $end = (!is_null($selected_date_to) && $selected_date_to !== 'null')
+                    ? Carbon::parse($selected_date_to)->endOfDay()
+                    : null;
+
+                $query->where(function ($q) use ($start, $end) {
+
+                    if ($end) {
+                        $q->whereBetween('delivery_date', [$start, $end])
+                        ->orWhereBetween('delivery_date_1', [$start, $end])
+                        ->orWhereBetween('delivery_date_2', [$start, $end])
+                        ->orWhereBetween('delivery_date_3', [$start, $end]);
+                    } else {
+                        $q->where('delivery_date', '>=', $start)
+                        ->orWhere('delivery_date_1', '>=', $start)
+                        ->orWhere('delivery_date_2', '>=', $start)
+                        ->orWhere('delivery_date_3', '>=', $start);
+                    }
+                });
             }
         ])
         ->get();
+
 
         $delivery_workers = [];
 
@@ -263,23 +319,21 @@ class AdminController extends CBController
         $delivery_date = $request->delivery_date;
         //$delivery_date = \Carbon\Carbon::createFromFormat('d/m/Y', $delivery_date)->format('Y-m-d');
         $delivery_date = new Carbon($delivery_date);
+        $updated = Package::where('id', $package_id)->first();
+        if($updated->delivery_date != $delivery_date ){
+            $this->shipmentService->markAsDelayed($updated->id, ['new_date' => $delivery_date->toDateString(), 'reason' => 'rescheduled']);
+        }
         try {
             $updated = Package::where('id', $package_id)
                 ->update([
                     'location_text' => $location_text,
                     'location_link' => $location_link,
                     'delivery_date' => $delivery_date,
-                    'status' => 4 // Modified status
+                    //'status' => 4 // Modified status
                 ]);
-            if ($updated) {
-                return response()->json([
-                    'success' => true
-                ], 200);
-            } else {
-                return response()->json([
-                    'success' => false
-                ], 500);
-            }
+            return response()->json([
+                'success' => true
+            ], 200);
 
         } catch (Exception $e) {
             return response()->json([

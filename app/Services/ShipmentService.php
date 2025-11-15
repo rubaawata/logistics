@@ -52,9 +52,28 @@ class ShipmentService
 
     public function markAsDelayed($shipmentId, $data)
     {
+        $canceled = $this->repository->saveOldDeliveryDate($shipmentId, $data['new_date'] ?? null);
+        if($canceled) {
+            return;
+        }
         return $this->repository->updateShipmentStatus($shipmentId, 5, [
             'reschedule_date' => $data['new_date'] ?? null,
             'delivery_date' => $data['new_date'] ?? null,
+            'failure_reason' => 'rescheduled',
+        ]);
+    }
+
+    public function markAsDelayedForTomorrow($shipmentId, $data)
+    {
+        $tomorrow = now()->addDay()->toDateString();
+        $canceled = $this->repository->saveOldDeliveryDate($shipmentId, $data['new_date'] ?? null);
+        if($canceled) {
+            return;
+        }
+        return $this->repository->updateShipmentStatus($shipmentId, 5, [
+            'reschedule_date' => $tomorrow,
+            'delivery_date' => $tomorrow,
+            'failure_reason' => 'rescheduled',
         ]);
     }
 }

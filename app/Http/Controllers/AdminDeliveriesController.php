@@ -119,13 +119,13 @@ class AdminDeliveriesController extends CBController
             'target' => '_blank',
         ];
 
-        /*$this->addaction[] = [
+        $this->addaction[] = [
             'label'=>'show in local',
             'url'   => 'export-delivery-report/[id]',
             'icon'  => 'fa fa-file-excel-o',
             'color' => 'success',
             'target' => '_blank',
-        ];*/
+        ];
 
         /*
 	        | ----------------------------------------------------------------------
@@ -396,8 +396,18 @@ class AdminDeliveriesController extends CBController
     public function getExportDeliveryReport($id)
     {
         $delivery = Delivery::where('id', '=', $id)->first();
-        $package = Package::where('delivery_id', $delivery->id)->whereDate('delivery_date', today())->with('Customer')->with('Seller')
-            ->get();
+
+        $package = Package::where('delivery_id', $delivery->id)
+        ->where(function ($query) {
+            $today = today()->toDateString();
+
+            $query->whereDate('delivery_date', $today)
+                ->orWhereDate('delivery_date_1', $today)
+                ->orWhereDate('delivery_date_2', $today)
+                ->orWhereDate('delivery_date_3', $today);
+        })
+        ->with(['Customer', 'Seller'])
+        ->get();
 
         $mpdf = new Mpdf([
             'mode' => 'utf-8',

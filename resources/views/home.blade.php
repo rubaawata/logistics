@@ -210,22 +210,25 @@
                                         $status_name = $status[$item['status']] ?? 'حالة غير معروفة';
                                         $failure_details = '';
 
-                                        if ($item['status'] == 3 && (!empty($item['failure_reason']) || !empty($item['custom_reason']) || !empty($item['reschedule_date']))) {
+                                        if(!($item['status'] == 5 && $item['delivery_date'] == today()->toDateString())){
+                                            
+                                            if (/*$item['status'] == 3 &&*/ (!empty($item['failure_reason']) || !empty($item['custom_reason']) || !empty($item['reschedule_date']))) {
 
-                                            if (!empty($item['failure_reason'])) {
-                                                $failure_details .= ' (السبب: ' . getReasonMessage($item['failure_reason']) . ')';
-                                            }
+                                                if (!empty($item['failure_reason'])) {
+                                                    $failure_details .= ' (السبب: ' . getReasonMessage($item['failure_reason']) . ')';
+                                                }
 
-                                            if (!empty($item['custom_reason'])) {
-                                                $failure_details .= ' | (ملاحظات المندوب: ' . $item['custom_reason'] . ')';
-                                            }
+                                                if (!empty($item['custom_reason'])) {
+                                                    $failure_details .= ' | (ملاحظات المندوب: ' . $item['custom_reason'] . ')';
+                                                }
 
-                                            if (!empty($item['reschedule_date'])) {
-                                                $reschedule_date = date('Y-m-d', strtotime($item['reschedule_date']));
-                                                $failure_details .= ' | (تمت إعادة الجدولة: ' . $reschedule_date . ')';
+                                                if (!empty($item['reschedule_date']) && $item['status'] === 5) {
+                                                    $reschedule_date = date('Y-m-d', strtotime($item['reschedule_date']));
+                                                    $failure_details .= ' | (تمت إعادة الجدولة: ' . $reschedule_date . ')';
+                                                }
                                             }
+                                            $status_name = $status_name . " " . $failure_details;
                                         }
-                                        $status_name = $status_name . " " . $failure_details;
                                     @endphp
                                     {{$status_name}}
                                 </td>

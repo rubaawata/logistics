@@ -56,6 +56,8 @@ class DeliveryDashboardController extends Controller
 
         if($validated['reason'] === 'rescheduled') {
             $this->shipmentService->markAsDelayed($shipmentId, $validated);
+        } elseif($validated['reason'] === 'no_answer') {
+            $this->shipmentService->markAsDelayedForTomorrow($shipmentId, $validated);
         } else {
             $this->shipmentService->markAsFailed($shipmentId, $validated);
         }
@@ -75,7 +77,18 @@ class DeliveryDashboardController extends Controller
     // TODO
     public function report($id){
         $delivery = Delivery::where('id', '=', $id)->first();
-        $package = Package::where('delivery_id', $delivery->id)->whereDate('delivery_date', today())->with('Customer')->with('Seller')
+        /*$package = Package::where('delivery_id', $delivery->id)->whereDate('delivery_date', today())->with('Customer')->with('Seller')
+            ->get();*/
+        $package = Package::where('delivery_id', $delivery->id)
+            ->where(function ($query) {
+                $today = today()->toDateString();
+
+                $query->whereDate('delivery_date', $today)
+                    ->orWhereDate('delivery_date_1', $today)
+                    ->orWhereDate('delivery_date_2', $today)
+                    ->orWhereDate('delivery_date_3', $today);
+            })
+            ->with(['Customer', 'Seller'])
             ->get();
         $data = [
             'packages' => $package,
@@ -89,7 +102,18 @@ class DeliveryDashboardController extends Controller
     public function seller($id)
     {
         $seller = Seller::where('id', '=', $id)->first();
-        $package = Package::where('seller_id', $seller->id)->whereDate('delivery_date', today())->with('Customer')->with('Seller')
+        /*$package = Package::where('seller_id', $seller->id)->whereDate('delivery_date', today())->with('Customer')->with('Seller')
+            ->get();*/
+        $package = Package::where('seller_id', $seller->id)
+            ->where(function ($query) {
+                $today = today()->toDateString();
+
+                $query->whereDate('delivery_date', $today)
+                    ->orWhereDate('delivery_date_1', $today)
+                    ->orWhereDate('delivery_date_2', $today)
+                    ->orWhereDate('delivery_date_3', $today);
+            })
+            ->with(['Customer', 'Seller'])
             ->get();
 
         $mpdf = new Mpdf([

@@ -116,13 +116,13 @@ class AdminSellersController extends CBController
         ];
 
         //TODO
-        /*$this->addaction[] = [
+        $this->addaction[] = [
             'label' => 'show in local',
             'url'   => 'export-seller-report/[id]',
             'icon'  => 'fa fa-file-excel-o',
             'color' => 'success',
             'target' => '_blank',
-        ];*
+        ];
 
         /*
 	        | ----------------------------------------------------------------------
@@ -394,8 +394,18 @@ class AdminSellersController extends CBController
     public function getExportSellerReport($id)
     {
         $seller = Seller::where('id', '=', $id)->first();
-        $package = Package::where('seller_id', $seller->id)->whereDate('delivery_date', today())->with('Customer')->with('Seller')
-            ->get();
+
+        $package = Package::where('seller_id', $seller->id)
+        ->where(function ($query) {
+            $today = today()->toDateString();
+
+            $query->whereDate('delivery_date', $today)
+                ->orWhereDate('delivery_date_1', $today)
+                ->orWhereDate('delivery_date_2', $today)
+                ->orWhereDate('delivery_date_3', $today);
+        })
+        ->with(['Customer', 'Seller'])
+        ->get();
 
         $mpdf = new Mpdf([
             'mode' => 'utf-8',

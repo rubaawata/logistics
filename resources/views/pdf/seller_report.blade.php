@@ -90,7 +90,7 @@
                     <td>{{ $package->Customer->name ?? '' }}</td>
                     <td>{{ $package->area->name ?? '' }}</td>
                     <td>{{ $package->product_type ?? '---' }}</td>
-                    <td>{{ getPackageStatus($package->status) ?? '---' }}</td>
+                    <td>{{ getPackageStatus($package->status, $package->delivery_date) ?? '---' }}</td>
                     <td>{{ $package->pieces_count ?? '---' }}</td>
                     <td>{{ $package->delivered_pieces_count ?? '---' }}</td>
                     <td>
