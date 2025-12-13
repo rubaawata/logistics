@@ -129,7 +129,7 @@ class AdminPackagesController extends CBController
 
         $this->form[] = ['label' => 'ملاحظات', 'name' => 'notes', 'type' => 'text', 'validation' => 'min:1', 'width' => 'col-sm-10'];
         $this->form[] = ['label' => 'المبلغ المحصل من الشحنة', 'name' => 'paid_amount', 'type' => 'number', 'validation' => 'integer|min:0', 'width' => 'col-sm-10'];
-        $this->form[] = ['label' => 'جهة تحمّل تكلفة التوصيل', 'name' => 'delivery_fee_payer', 'type' => 'select', 'validation' => 'required|min:1|max:255', 'width' => 'col-sm-10', 'dataenum' => $this->getDeliveryFeePayer()];
+        //$this->form[] = ['label' => 'جهة تحمّل تكلفة التوصيل', 'name' => 'delivery_fee_payer', 'type' => 'select', 'validation' => 'min:1|max:255', 'width' => 'col-sm-10', 'dataenum' => $this->getDeliveryFeePayer()];
         # END FORM DO NOT REMOVE THIS LINE
 
         # OLD START FORM

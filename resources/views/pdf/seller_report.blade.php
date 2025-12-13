@@ -81,12 +81,16 @@
                 <th>السبب</th>
                 <th>عدد المنتجات</th>
                 <th>عدد المنتجات الموصلة</th>
-                <th>المبلغ المستحق</th>
                 <th>جهة تحمّل تكلفة التوصيل</th>
+                
+                <th>المبلغ المستحق</th>
                 <th>أجور التوصيل</th>
             </tr>
         </thead>
         <tbody>
+            @php
+                $total_delivery_cost = 0;
+            @endphp
             @foreach($packages as $package)
                 <tr>
                     <td>{{ $package->Customer->name ?? '' }}</td>
@@ -96,15 +100,19 @@
                     <td>{{ getReasonMessage($package->failure_reason) ?? '---' }}</td>
                     <td>{{ $package->pieces_count ?? '---' }}</td>
                     <td>{{ $package->delivered_pieces_count ?? '---' }}</td>
+                    <td>{{getDeliveryFeePayer($package->delivery_fee_payer, $package->status, $package->failure_reason) ?? '---'}}</td>
                     <td>
                         @if($package->status == 1)
                             {{ number_format($package->paid_amount - $package->delivery_cost ?? 0) }}
                         @endif
                     </td>
-                    <td>{{getDeliveryFeePayer($package->delivery_fee_payer, $package->status, $package->failure_reason) ?? '---'}}</td>
+                    
                     <td>
-                        @if($package->status == 1)
+                        @if($package->status == 1 || ($package->status == 3 && $package->failure_reason == 'client_refuse_to_accept_order'))
                             {{ number_format($package->delivery_cost ?? 0) }}
+                            @php
+                                $total_delivery_cost += $package->delivery_cost;
+                            @endphp
                         @endif
                     </td>
                 </tr>
@@ -113,7 +121,7 @@
             <tr class="total-row">
                 <td colspan="8">المجموع</td>
                 <td>{{ number_format($packages->where('status', 1)->sum(fn($p) => $p->paid_amount - $p->delivery_cost)) }}</td>
-                <td>{{ number_format($packages->where('status', 1)->sum('delivery_cost')) }}</td>
+                <td>{{ number_format($total_delivery_cost) }}</td>
             </tr>
         </tbody>
     </table>

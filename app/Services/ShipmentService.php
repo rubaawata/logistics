@@ -52,10 +52,10 @@ class ShipmentService
 
     public function markAsFailedBecauseOfSeller($shipmentId, $data)
     {
-        $deliveryCost = $this->repository->getDeliveryCost($shipmentId);
+        //$deliveryCost = $this->repository->getDeliveryCost($shipmentId);
         return $this->repository->updateShipmentStatus($shipmentId, 3, [
             'failure_reason' => $data['reason'],
-            'paid_amount' => $deliveryCost,
+            'paid_amount' => 0,
             'delivery_fee_payer' => 'seller',
         ]);
     }
