@@ -192,6 +192,7 @@
                             <th>تاريخ التوصيل</th>
                             <th>سعر الشحنة</th>
                             <th>كلفة الشحن</th>
+                            <th>جهة تحمّل تكلفة التوصيل</th>
                             <th>العمليات</th>
                         </tr>
                     </thead>
@@ -235,7 +236,7 @@
                                 <td>{{$item['delivery_date']}}</td>
                                 <td>{{$item['package_cost']}}</td>
                                 <td>{{$item['delivery_cost']}}</td>
-                                
+                                <td>{{getDeliveryFeePayer($item['delivery_fee_payer'], $item['status'], $item['failure_reason']) ?? '---'}}</td>
                                 <td>
                                     <button class="btn btn-xs btn-success btn-edit" onclick="updatePackageStatusModal({{$item['id']}}, '{{$item['status']}}')">تعديل الحالة</button>
                                     <button class="btn btn-xs btn-warning btn-edit" onclick="updatePackageDeliveryInfoModal({{$item['id']}}, '{{$item['location_text']}}', '{{$item['location_link']}}', '{{$item['delivery_date']}}', '{{$item['paid_amount']}}')">تعديل الشحنة</button>

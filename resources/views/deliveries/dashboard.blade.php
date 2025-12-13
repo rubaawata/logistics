@@ -221,6 +221,7 @@
                                                 <option value="rescheduled">العميل قام بتأجيل الشحنة</option>
                                                 <option value="rto">RTO</option>
                                                 <option value="client_wrong_data">معلومات العميل غير صحيحة</option>
+                                                <option value="client_refuse_to_accept_order">الشحنة تحتوي على مشكلة والعميل رفض الاستلام</option>
                                                 <option value="other">سبب آخر</option>
                                             </select>
                                         </div>

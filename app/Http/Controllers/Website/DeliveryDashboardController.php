@@ -58,6 +58,9 @@ class DeliveryDashboardController extends Controller
             $this->shipmentService->markAsDelayed($shipmentId, $validated);
         } elseif(in_array($validated['reason'], ['no_answer', 'client_wrong_data'])) {
             $this->shipmentService->markAsDelayedForTomorrow($shipmentId, $validated);
+        } elseif($validated['reason'] === 'client_refuse_to_accept_order') {
+            $this->shipmentService->markAsFailedBecauseOfSeller($shipmentId, $validated);
+
         } else {
             $this->shipmentService->markAsFailed($shipmentId, $validated);
         }

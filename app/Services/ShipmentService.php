@@ -50,6 +50,16 @@ class ShipmentService
         ]);
     }
 
+    public function markAsFailedBecauseOfSeller($shipmentId, $data)
+    {
+        $deliveryCost = $this->repository->getDeliveryCost($shipmentId);
+        return $this->repository->updateShipmentStatus($shipmentId, 3, [
+            'failure_reason' => $data['reason'],
+            'paid_amount' => $deliveryCost,
+            'delivery_fee_payer' => 'seller',
+        ]);
+    }
+
     public function markAsDelayed($shipmentId, $data)
     {
         $canceled = $this->repository->saveOldDeliveryDate($shipmentId, $data['new_date'] ?? null);

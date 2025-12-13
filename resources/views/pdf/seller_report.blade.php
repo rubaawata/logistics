@@ -82,6 +82,7 @@
                 <th>عدد المنتجات</th>
                 <th>عدد المنتجات الموصلة</th>
                 <th>المبلغ المستحق</th>
+                <th>جهة تحمّل تكلفة التوصيل</th>
                 <th>أجور التوصيل</th>
             </tr>
         </thead>
@@ -100,6 +101,7 @@
                             {{ number_format($package->paid_amount - $package->delivery_cost ?? 0) }}
                         @endif
                     </td>
+                    <td>{{getDeliveryFeePayer($package->delivery_fee_payer, $package->status, $package->failure_reason) ?? '---'}}</td>
                     <td>
                         @if($package->status == 1)
                             {{ number_format($package->delivery_cost ?? 0) }}
@@ -109,7 +111,7 @@
             @endforeach
 
             <tr class="total-row">
-                <td colspan="7">المجموع</td>
+                <td colspan="8">المجموع</td>
                 <td>{{ number_format($packages->where('status', 1)->sum(fn($p) => $p->paid_amount - $p->delivery_cost)) }}</td>
                 <td>{{ number_format($packages->where('status', 1)->sum('delivery_cost')) }}</td>
             </tr>

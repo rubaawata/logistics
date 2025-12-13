@@ -100,6 +100,9 @@ class AdminPackagesController extends CBController
         $this->col[] = ["label" => "عدد محاولات التوصيل", "name" => "number_of_attempts"];
         $this->col[] = ["label" => "المبلغ المقبوض", "name" => "paid_amount"];
         $this->col[] = ["label" => "عدد القطع المسلمة", "name" => "delivered_pieces_count"];
+        $this->col[] = ["label" => "جهة تحمّل تكلفة التوصيل", "name" => "delivery_fee_payer", "callback" => function ($row) {
+            return getDeliveryFeePayer($row->delivery_fee_payer, $row->status, $row->failure_reason);
+        }];
         # END COLUMNS DO NOT REMOVE THIS LINE
 
         # START FORM DO NOT REMOVE THIS LINE
@@ -126,6 +129,7 @@ class AdminPackagesController extends CBController
 
         $this->form[] = ['label' => 'ملاحظات', 'name' => 'notes', 'type' => 'text', 'validation' => 'min:1', 'width' => 'col-sm-10'];
         $this->form[] = ['label' => 'المبلغ المحصل من الشحنة', 'name' => 'paid_amount', 'type' => 'number', 'validation' => 'integer|min:0', 'width' => 'col-sm-10'];
+        $this->form[] = ['label' => 'جهة تحمّل تكلفة التوصيل', 'name' => 'delivery_fee_payer', 'type' => 'select', 'validation' => 'required|min:1|max:255', 'width' => 'col-sm-10', 'dataenum' => $this->getDeliveryFeePayer()];
         # END FORM DO NOT REMOVE THIS LINE
 
         # OLD START FORM
@@ -944,5 +948,17 @@ class AdminPackagesController extends CBController
                 $packageStatus .= ';';
         }
         return $packageStatus;
+    }
+
+    public function getDeliveryFeePayer()
+    {
+        $deliveryFeePayer = config('constants.DELIVERY_FEE_PAYER');
+        $deliveryFeePayerStr = '';
+        foreach ($deliveryFeePayer as $index => $item) {
+            $deliveryFeePayerStr .= $index . '|' . $item;
+            if ($index < count($deliveryFeePayer))
+                $deliveryFeePayerStr .= ';';
+        }
+        return $deliveryFeePayerStr;
     }
 }

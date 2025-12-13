@@ -27,6 +27,8 @@ if (!function_exists('getReasonMessage')) {
                 return 'RTO';
             case 'client_wrong_data':
                 return 'معلومات العميل غير صحيحة';
+            case 'client_refuse_to_accept_order':
+                return 'الشحنة تحتوي على مشكلة والعميل رفض الاستلام';
             case 'other':
                 return 'سبب آخر';
             case 'too_many_attempts':
@@ -34,5 +36,15 @@ if (!function_exists('getReasonMessage')) {
             default:
                 return 'غير معروف';
         }
+    }
+}
+
+if (!function_exists('getDeliveryFeePayer')) {
+    function getDeliveryFeePayer($delivery_fee_payer, $status, $reason)
+    {
+        if($status == 1 || ($status == 3 && $reason == 'client_refuse_to_accept_order')) { // show fee payer if status is delivered or cancelled and reason is Client_refuse_to_accept_order
+            return config('constants.DELIVERY_FEE_PAYER')[$delivery_fee_payer] ?? '---';
+        }
+        return '---';
     }
 }
