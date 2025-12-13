@@ -78,6 +78,7 @@
                 <th>منطقة التوصيل</th>
                 <th>نوع المنتج</th>
                 <th>الحالة</th>
+                <th>السبب</th>
                 <th>عدد المنتجات</th>
                 <th>عدد المنتجات الموصلة</th>
                 <th>المبلغ المستحق</th>
@@ -91,6 +92,7 @@
                     <td>{{ $package->area->name ?? '' }}</td>
                     <td>{{ $package->product_type ?? '---' }}</td>
                     <td>{{ getPackageStatus($package->status, $package->delivery_date) ?? '---' }}</td>
+                    <td>{{ getReasonMessage($package->failure_reason) ?? '---' }}</td>
                     <td>{{ $package->pieces_count ?? '---' }}</td>
                     <td>{{ $package->delivered_pieces_count ?? '---' }}</td>
                     <td>
@@ -107,7 +109,7 @@
             @endforeach
 
             <tr class="total-row">
-                <td colspan="6">المجموع</td>
+                <td colspan="7">المجموع</td>
                 <td>{{ number_format($packages->where('status', 1)->sum(fn($p) => $p->paid_amount - $p->delivery_cost)) }}</td>
                 <td>{{ number_format($packages->where('status', 1)->sum('delivery_cost')) }}</td>
             </tr>

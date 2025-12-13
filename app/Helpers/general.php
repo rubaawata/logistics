@@ -6,7 +6,7 @@ if (!function_exists('getPackageStatus')) {
         $statuses = config('constants.PACKAGE_STATUS');
         $statusName = $statuses[$status] ?? 'غير معروف';
         $today = today()->toDateString();
-        if($delivery_date && $status === 5 && $delivery_date != $today) {
+        if ($delivery_date && $status === 5 && $delivery_date != $today) {
             return 'مؤجلة';
         }
         return $statusName;
@@ -25,6 +25,8 @@ if (!function_exists('getReasonMessage')) {
                 return 'العميل قام بتأجيل الشحنة';
             case 'rto':
                 return 'RTO';
+            case 'client_wrong_data':
+                return 'معلومات العميل غير صحيحة';
             case 'other':
                 return 'سبب آخر';
             case 'too_many_attempts':

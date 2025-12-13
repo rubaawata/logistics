@@ -73,7 +73,8 @@ class ShipmentService
         return $this->repository->updateShipmentStatus($shipmentId, 5, [
             'reschedule_date' => $tomorrow,
             'delivery_date' => $tomorrow,
-            'failure_reason' => 'rescheduled',
+            'failure_reason' => $data['reason'],
+            'custom_reason' => $data['custom_reason'] ?? null,
         ]);
     }
 }

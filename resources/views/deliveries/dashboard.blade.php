@@ -220,6 +220,7 @@
                                                 <option value="refused">العميل رفض الاستلام</option>
                                                 <option value="rescheduled">العميل قام بتأجيل الشحنة</option>
                                                 <option value="rto">RTO</option>
+                                                <option value="client_wrong_data">معلومات العميل غير صحيحة</option>
                                                 <option value="other">سبب آخر</option>
                                             </select>
                                         </div>
@@ -346,7 +347,7 @@
 
                 if (reason === 'rescheduled') {
                     $(newDateField).show().find('input').attr('required', 'required');
-                } else if (reason === 'other') {
+                } else if (reason === 'other' || reason === 'client_wrong_data') {
                     $(customReasonField).show().find('textarea').attr('required', 'required');
                 }
             }

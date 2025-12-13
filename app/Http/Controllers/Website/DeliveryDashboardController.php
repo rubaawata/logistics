@@ -56,7 +56,7 @@ class DeliveryDashboardController extends Controller
 
         if($validated['reason'] === 'rescheduled') {
             $this->shipmentService->markAsDelayed($shipmentId, $validated);
-        } elseif($validated['reason'] === 'no_answer') {
+        } elseif(in_array($validated['reason'], ['no_answer', 'client_wrong_data'])) {
             $this->shipmentService->markAsDelayedForTomorrow($shipmentId, $validated);
         } else {
             $this->shipmentService->markAsFailed($shipmentId, $validated);
