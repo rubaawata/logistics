@@ -317,6 +317,7 @@ class AdminController extends CBController
         $location_text = $request->location_text;
         $location_link = $request->location_link;
         $delivery_date = $request->delivery_date;
+        $paid_amount = $request->paid_amount;
         //$delivery_date = \Carbon\Carbon::createFromFormat('d/m/Y', $delivery_date)->format('Y-m-d');
         $delivery_date = new Carbon($delivery_date);
         $updated = Package::where('id', $package_id)->first();
@@ -329,6 +330,7 @@ class AdminController extends CBController
                     'location_text' => $location_text,
                     'location_link' => $location_link,
                     'delivery_date' => $delivery_date,
+                    'paid_amount' => $paid_amount,
                     //'status' => 4 // Modified status
                 ]);
             return response()->json([

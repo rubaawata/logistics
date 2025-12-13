@@ -125,6 +125,7 @@ class AdminPackagesController extends CBController
         $this->form[] = ['label' => 'عدد القطع', 'name' => 'pieces_count', 'type' => 'number', 'validation' => 'required', 'width' => 'col-sm-10'];
 
         $this->form[] = ['label' => 'ملاحظات', 'name' => 'notes', 'type' => 'text', 'validation' => 'min:1', 'width' => 'col-sm-10'];
+        $this->form[] = ['label' => 'المبلغ المحصل من الشحنة', 'name' => 'paid_amount', 'type' => 'number', 'validation' => 'integer|min:0', 'width' => 'col-sm-10'];
         # END FORM DO NOT REMOVE THIS LINE
 
         # OLD START FORM

@@ -238,7 +238,7 @@
                                 
                                 <td>
                                     <button class="btn btn-xs btn-success btn-edit" onclick="updatePackageStatusModal({{$item['id']}}, '{{$item['status']}}')">تعديل الحالة</button>
-                                    <button class="btn btn-xs btn-warning btn-edit" onclick="updatePackageDeliveryInfoModal({{$item['id']}}, '{{$item['location_text']}}', '{{$item['location_link']}}', '{{$item['delivery_date']}}')">تعديل الشحنة</button>
+                                    <button class="btn btn-xs btn-warning btn-edit" onclick="updatePackageDeliveryInfoModal({{$item['id']}}, '{{$item['location_text']}}', '{{$item['location_link']}}', '{{$item['delivery_date']}}', '{{$item['paid_amount']}}')">تعديل الشحنة</button>
                                     <button class="btn btn-xs btn-primary btn-edit" onclick="updatePackageDeliveryModal({{$item['id']}}, '{{$item['delivery_id']}}')">تعديل المندوب</button>
                                     <a class="btn btn-xs btn-success btn-edit" href="admin/packages/bill-of-lading/{{$item['id']}}" target="_blank">البوليصة</a>
                                     <button class="btn btn-xs btn-primary btn-edit" onclick="redirectToWhatsApp('{{$item['customer']['phone_number']}}')">واتساب</button>
@@ -368,6 +368,11 @@
                 <div class="mb-3">
                     <label for="location_link" class="form-label">رابط عنوان الشحنة</label>
                     <input type="text" title="Location Link" required="" maxlength="255" class="form-control" name="location_link" id="location_link" value="" spellcheck="false" data-ms-editor="true">
+                </div>
+
+                <div class="mb-3">
+                    <label for="paid_amount" class="form-label">المبلغ المحصل من الشحنة</label>
+                    <input type="number" title="Paid Amount" class="form-control" name="paid_amount" id="paid_amount" value="" spellcheck="false" data-ms-editor="true">
                 </div>
                 <div id="responseMessageDeliveryInfo" class="text-success small"></div>
                 <div id="responseErrorDeliveryInfo" class="text-danger small"></div>
@@ -513,12 +518,13 @@
     </script>
 
     <script>
-        function updatePackageDeliveryInfoModal(package_id, location_text, location_link, delivery_date) {
+        function updatePackageDeliveryInfoModal(package_id, location_text, location_link, delivery_date, paid_amount) {
             $('#package_id_delivery_info').val(package_id);
             $('#responseMessageDeliveryInfo').text('');
             $('#responseErrorDeliveryInfo').text('');
             $('#location_text').val(location_text);
             $('#location_link').val(location_link);
+            $('#paid_amount').val(paid_amount);
             $('#deliveryInfoModal').modal('show');
         }
 
@@ -528,6 +534,7 @@
             location_text = document.getElementById('location_text').value;
             location_link = document.getElementById('location_link').value;
             delivery_date = document.getElementById('delivery_date').value;
+            paid_amount = document.getElementById('paid_amount').value;
             $.ajax({
                 url: '/admin/update-package-delivery-info',
                 type: 'POST',
@@ -536,6 +543,7 @@
                     location_text: location_text,
                     location_link: location_link,
                     delivery_date: delivery_date,
+                    paid_amount: paid_amount,
                     _token: '{{ csrf_token() }}'
                 },
                 success: function(response) {
