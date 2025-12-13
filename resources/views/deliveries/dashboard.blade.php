@@ -83,7 +83,7 @@
                                     </p>
 
                                     <p class="mb-1 text-muted">
-                                        السعر: {{ $shipment->package_cost + $shipment->delivery_cost }}
+                                        السعر: {{ number_format($shipment->package_cost + $shipment->delivery_cost) }}
                                     </p>
                                 </div>
 
@@ -160,9 +160,9 @@
                                         <div class="mb-3">
                                             <label class="form-label fw-bold text-dark">
                                                 إجمالي المبلغ المطلوب تحصيله:
-                                                {{ $shipment->package_cost + $shipment->delivery_cost }}
+                                                {{ number_format($shipment->package_cost + $shipment->delivery_cost) }}
                                             </label>
-                                            <input type="number" step="0.01" name="total_cost" class="form-control"
+                                            <input type="text" step="0.01" name="total_cost" class="form-control number-format"
                                                 required placeholder="أدخل المبلغ الإجمالي الذي تم تحصيله">
                                         </div>
 
@@ -204,9 +204,9 @@
                                         <div class="mb-3">
                                             <label class="form-label fw-bold text-dark">
                                                 مبلغ التوصيل
-                                                {{ $shipment->delivery_cost }}
+                                                {{ number_format($shipment->delivery_cost) }}
                                             </label>
-                                            <input type="number" step="0.01" name="cancel_total_cost" class="form-control"
+                                            <input type="text" step="0.01" name="cancel_total_cost" class="form-control number-format"
                                                 required placeholder="أدخل المبلغ الإجمالي الذي تم تحصيله" value="0">
                                         </div>
 
@@ -294,6 +294,12 @@
                     $submitButton.prop('disabled', true).text('جارٍ الإرسال...');
                     $('#alert-container').empty();
 
+                    //delete all (,) from number inputs
+                    $form.find('.number-format').each(function() {
+                        const rawValue = $(this).val().replace(/,/g, '');
+                        $(this).val(rawValue);
+                    });
+
                     $.ajax({
                         url: actionUrl,
                         type: 'POST',
@@ -375,5 +381,23 @@
                 location.reload();
             }
         </script>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                document.querySelectorAll(".number-format").forEach(input => {
+                    input.addEventListener("input", function () {
+                        let value = this.value.replace(/,/g, "").replace(/\D/g, "");
+        
+                        if (value === "") {
+                            this.value = "";
+                            return;
+                        }
+            
+                        this.value = Number(value).toLocaleString("en-US");
+                    });
+                });
+            });
+        </script>
+    
     @endpush
 @endsection
