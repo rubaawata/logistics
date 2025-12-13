@@ -98,6 +98,9 @@
                                         @if ($shipment->notes)
                                             <strong>علامات مميزة:</strong> {{ $shipment->notes }}
                                         @endif
+                                        @if ($shipment->description)
+                                            <br><strong>وصف الشحنة:</strong> {{ $shipment->description }}
+                                        @endif
                                     </p>
                                 </div>
 
