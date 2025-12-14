@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 use crocodicstudio\crudbooster\helpers\CRUDBooster;
 use crocodicstudio\crudbooster\controllers\CBController;
 use Mpdf\Mpdf;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\SellerReportExport;
 
 class AdminSellersController extends CBController
 {
@@ -109,21 +111,29 @@ class AdminSellersController extends CBController
 	        */
         $this->addaction = array();
         $this->addaction[] = [
+            'label' => 'تصدير PDF',
             'url'   => CRUDBooster::mainpath('export-seller-report/[id]'),
             'icon' => 'fa fa-file-pdf-o',
             'color' => 'success',
             'target' => '_blank',
         ];
 
-        //TODO
+
+
         $this->addaction[] = [
-            'label' => 'show in local',
+            'label' => 'تصدير Excel',
+            'url'   => CRUDBooster::mainpath('export-seller-report-excel/[id]'),
+            'icon'  => 'fa fa-file-excel-o',
+            'color' => 'success',
+            'target' => '_blank',
+        ];
+        $this->addaction[] = [
+            'label' => 'مشاهدة فقط',
             'url'   => 'export-seller-report/[id]',
             'icon'  => 'fa fa-file-excel-o',
             'color' => 'success',
             'target' => '_blank',
         ];
-
         /*
 	        | ----------------------------------------------------------------------
 	        | Add More Button Selected
@@ -426,5 +436,17 @@ class AdminSellersController extends CBController
 
         return response($mpdf->Output('', 'S'), 200)
             ->header('Content-Type', 'application/pdf');
+    }
+
+    public function getExportSellerReportExcel($id)
+    {
+        $seller = Seller::findOrFail($id);
+        
+        $filename = 'تقرير_التاجر_' . $seller->seller_name . '_' . now()->format('Y-m-d') . '.xlsx';
+    
+        return Excel::download(
+            new SellerReportExport($seller->id, $seller->seller_name), 
+            $filename
+        );
     }
 }

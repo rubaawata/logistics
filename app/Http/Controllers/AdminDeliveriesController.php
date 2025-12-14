@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Exports\DeliveryReportExport;
 use App\Models\Delivery;
 use App\Models\Package;
 use Illuminate\Support\Facades\Session;
@@ -10,6 +11,9 @@ use crocodicstudio\crudbooster\helpers\CRUDBooster;
 use crocodicstudio\crudbooster\controllers\CBController;
 use Illuminate\Support\Facades\Hash;
 use Mpdf\Mpdf;
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Concerns\FromArray;
+use Maatwebsite\Excel\Concerns\WithHeadings;
 
 class AdminDeliveriesController extends CBController
 {
@@ -113,6 +117,7 @@ class AdminDeliveriesController extends CBController
 	        */
         $this->addaction = array();
         $this->addaction[] = [
+            'label'=>'تصدير PDF ',
             'url'   => CRUDBooster::mainpath('export-delivery-report/[id]'),
             'icon' => 'fa fa-file-pdf-o',
             'color' => 'success',
@@ -120,7 +125,15 @@ class AdminDeliveriesController extends CBController
         ];
 
         $this->addaction[] = [
-            'label'=>'show in local',
+            'label'=>'تصدير Excel',
+            'url'   => CRUDBooster::mainpath('export-delivery-report-excel/[id]'),
+            'icon'  => 'fa fa-file-excel-o',
+            'color' => 'success',
+            'target' => '_blank',
+        ];
+
+        $this->addaction[] = [
+            'label'=>'مشاهدة فقط',
             'url'   => 'export-delivery-report/[id]',
             'icon'  => 'fa fa-file-excel-o',
             'color' => 'success',
@@ -428,5 +441,17 @@ class AdminDeliveriesController extends CBController
 
         return response($mpdf->Output('', 'S'), 200)
             ->header('Content-Type', 'application/pdf');
+    }
+
+    public function getExportDeliveryReportExcel($id)
+    {
+        $delivery = Delivery::findOrFail($id);
+        
+        $filename = 'تقرير_التوصيل_' . $delivery->name . '_' . now()->format('Y-m-d') . '.xlsx';
+    
+        return Excel::download(
+            new DeliveryReportExport($delivery->id, $delivery->name), 
+            $filename
+        );
     }
 }

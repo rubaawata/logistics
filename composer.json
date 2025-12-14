@@ -17,6 +17,7 @@
         "laravel/framework": "^7.29",
         "laravel/sanctum": "^2.15",
         "laravel/tinker": "^2.5",
+        "maatwebsite/excel": "^3.1",
         "mpdf/mpdf": "^8.2",
         "voila_cms/crudbooster": "v3.0.0.41"
     },
