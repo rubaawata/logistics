@@ -27,4 +27,5 @@ Route::prefix('v1/third-party')->middleware('api.key')->group(function () {
     Route::get('/packages/{id}', [ThirdPartyApiController::class, 'getPackage']);
     
     Route::get('/areas', [ThirdPartyApiController::class, 'getAreas']);
+    Route::get('/statuses', [ThirdPartyApiController::class, 'getStatuses']);
 });
