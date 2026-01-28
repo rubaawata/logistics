@@ -21,8 +21,6 @@ class ThirdPartyPackage extends Model
         'seller_price',
         'customer_price',
         'price_per_piece',
-        'discount_amount',
-        'discount_percentage',
         'delivery_date',
         'receipt_date',
         'location_link',
@@ -53,8 +51,6 @@ class ThirdPartyPackage extends Model
         'seller_price' => 'decimal:2',
         'customer_price' => 'decimal:2',
         'price_per_piece' => 'decimal:2',
-        'discount_amount' => 'decimal:2',
-        'discount_percentage' => 'decimal:2',
         'paid_amount' => 'decimal:2',
         'open_package' => 'boolean',
         'delivery_date' => 'date',
@@ -78,6 +74,11 @@ class ThirdPartyPackage extends Model
     public function Delivery()
     {
         return $this->belongsTo(Delivery::class, 'delivery_id');
+    }
+
+    public function items()
+    {
+        return $this->hasMany(ThirdPartyPackageItem::class, 'third_party_package_id')->orderBy('sort_order');
     }
 }
 

@@ -36,8 +36,6 @@ class CreateThirdPartyPackagesTable extends Migration
             $table->decimal('seller_price', 10, 2)->comment('السعر الذي يدفعه التاجر');
             $table->decimal('customer_price', 10, 2)->comment('السعر الذي يدفعه الزبون');
             $table->decimal('price_per_piece', 10, 2)->nullable()->comment('سعر كل قطعة');
-            $table->decimal('discount_amount', 10, 2)->default(0)->comment('مبلغ الخصم');
-            $table->decimal('discount_percentage', 5, 2)->default(0)->comment('نسبة الخصم');
             
             // Shipping Information
             $table->date('delivery_date');
