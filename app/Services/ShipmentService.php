@@ -87,4 +87,11 @@ class ShipmentService
             'custom_reason' => $data['custom_reason'] ?? null,
         ]);
     }
+
+    public function updatePackage($packageId, $data)
+    {
+        //TODO: Implement this method
+        return true;
+        return $this->repository->updateShipmentStatus($packageId, $data['status'], $data);
+    }
 }

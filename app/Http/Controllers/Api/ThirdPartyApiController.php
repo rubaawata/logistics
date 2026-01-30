@@ -10,9 +10,16 @@ use App\Models\ThirdPartyApplication;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use App\Services\ShipmentService;
 
 class ThirdPartyApiController extends Controller
 {
+    protected ShipmentService $shipmentService;
+    public function __construct(ShipmentService $shipmentService)
+    {
+        $this->shipmentService = $shipmentService;
+    }
+
     //--------------------------------------------------//
     public function createPackage(Request $request)
     {
@@ -160,7 +167,7 @@ class ThirdPartyApiController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create package',
-                'error' => $e->getMessage()
+                //'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -195,7 +202,7 @@ class ThirdPartyApiController extends Controller
                 'delivery_cost' => $package->delivery_cost,
                 'status' => $this->getStatusesText($package->status),
                 'reference_number' => $package->reference_number,
-                'canceld_by' => $this->getCanceldByText($package->canceld_by),
+                'canceld_by' => $this->getCanceldByText($package->canceled_by),
                 'delivery_date' => $package->delivery_date,
                 'seller_name' => $package->seller_name,
                 'seller_company' => $package->seller_company,
@@ -252,11 +259,11 @@ class ThirdPartyApiController extends Controller
         //--------------------------------------------------//
         // Filter by date range
         if ($request->has('date_from')) {
-            $query->where('delivery_date', '>=', $request->date_from);
+            $query->where('created_at', '>=', $request->date_from);
         }
         //--------------------------------------------------//
         if ($request->has('date_to')) {
-            $query->where('delivery_date', '<=', $request->date_to);
+            $query->where('created_at', '<=', $request->date_to);
         }
         //--------------------------------------------------//
         $perPage = (int) $request->get('per_page', 20);
@@ -272,7 +279,7 @@ class ThirdPartyApiController extends Controller
                 'delivery_cost'    => $package->delivery_cost,
                 'status'           => $this->getStatusesText($package->status),
                 'reference_number' => $package->reference_number,
-                'canceld_by'       => $this->getCanceldByText($package->canceld_by),
+                'canceld_by'       => $this->getCanceldByText($package->canceled_by),
                 'delivery_date'    => $package->delivery_date,
                 'seller_name'      => $package->seller_name,
                 'seller_company'   => $package->seller_company,
@@ -401,14 +408,176 @@ class ThirdPartyApiController extends Controller
             ], 500);
         }
     }
-    
+
+    //--------------------------------------------------//
+    public function cancelPackage(Request $request, $id)
+    {
+        try {
+            DB::beginTransaction();
+            //--------------------------------------------------//
+            // Get authenticated user
+            $thirdPartyApp = $request->get('third_party_app');
+            if (!$thirdPartyApp) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Third party application not found'
+                ], 401);
+            }
+            //--------------------------------------------------//
+            // Find the package
+            $package = ThirdPartyPackage::where('third_party_application_id', $thirdPartyApp->id)->where('id_per_user', $id)->first();
+            if (!$package) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Package not found'
+                ], 404);
+            }
+
+            // Check if already cancelled or delivered
+            if (in_array($package->status, ['cancelled', 'delivered'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Package cannot be cancelled because it is already ' . $this->getStatusesText($package->status),
+                ], 400);
+            }
+            //--------------------------------------------------//
+            // Update package status
+            $package->status      = 'cancelled';
+            $package->canceled_by  = 'your_side';
+            $package->save();
+            //--------------------------------------------------//
+            // If main_package_id exists, notify shipment service
+            if ($package->main_package_id) {
+                $this->shipmentService->markAsFailed(
+                    $package->main_package_id,
+                    [
+                        'reason'           => 'Cancelled by third party' . $thirdPartyApp->name,
+                        'cancel_total_cost' => 0,
+                    ]
+                );
+            }
+            //--------------------------------------------------//
+            DB::commit();
+            //--------------------------------------------------//
+            return response()->json([
+                'success' => true,
+                'message' => 'Package cancelled successfully',
+                'data'    => [
+                    'package_id' => $package->id_per_user,
+                    'status'     => $package->status,
+                    'canceld_by' => $this->getCanceldByText($package->canceled_by),
+                ]
+            ]);
+            //--------------------------------------------------//
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to cancel package',
+                //'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    //--------------------------------------------------//
+    public function updatePackage(Request $request, $id)
+    {
+        try {
+            DB::beginTransaction();
+            //--------------------------------------------------//
+            // Get authenticated third-party app
+            $thirdPartyApp = $request->get('third_party_app');
+            if (!$thirdPartyApp) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Third party application not found'
+                ], 401);
+            }
+            //--------------------------------------------------//
+            // Find the package
+            $package = ThirdPartyPackage::where('third_party_application_id', $thirdPartyApp->id)
+                ->where('id_per_user', $id)
+                ->first();
+
+            if (!$package) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Package not found'
+                ], 404);
+            }
+            //--------------------------------------------------//
+            // Check if package is cancelled or delivered
+            if (in_array($package->status, ['cancelled', 'delivered'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Package cannot be updated because it is already ' . $this->getStatusesText($package->status),
+                ], 400);
+            }
+            //--------------------------------------------------//
+            // Validate input
+            $validator = Validator::make($request->all(), [
+                'seller_name'     => 'required|string|max:255',
+                'seller_company'  => 'nullable|string|max:255',
+                'seller_phone'    => 'nullable|string|max:255',
+                'seller_email'    => 'nullable|email|max:255',
+                'customer_name'   => 'required|string|max:255',
+                'customer_phone'  => 'required|string|max:255',
+                'customer_email'  => 'nullable|email|max:255',
+                'location_link'   => 'nullable|string|max:255',
+                'location_text'   => 'nullable|string',
+                'building_number' => 'nullable|string|max:255',
+                'floor_number'    => 'nullable|string|max:255',
+                'apartment_number' => 'nullable|string|max:255',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation error',
+                    'errors'  => $validator->errors(),
+                ], 422);
+            }
+            //--------------------------------------------------//
+            // Update package fields
+            $updateData = $validator->validated();
+            $package->update($updateData);
+            //--------------------------------------------------//
+            // Call shipment service if main_package_id exists
+            if ($package->main_package_id) {
+                $this->shipmentService->updatePackage(
+                    $package->main_package_id,
+                    $updateData
+                );
+            }
+            //--------------------------------------------------//
+            DB::commit();
+            //--------------------------------------------------//
+            return response()->json([
+                'success' => true,
+                'message' => 'Package updated successfully',
+                'data' => [
+                    'package_id' => $package->id_per_user,
+                    'status'     => $this->getStatusesText($package->status),
+                ]
+            ]);
+            //--------------------------------------------------//
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update package',
+                //'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     //--------------------------------------------------//
     private function getStatusesText($status)
     {
         switch ($status) {
             case 'pending':
                 return 'Pending';
-            case 'canceleld':
+            case 'cancelled':
                 return 'Cancelled';
             case 'delivered':
                 return 'Delivered';
@@ -423,6 +592,7 @@ class ThirdPartyApiController extends Controller
         }
     }
 
+    //--------------------------------------------------//
     private function getCanceldByText($canceld_by)
     {
         switch ($canceld_by) {
@@ -441,6 +611,7 @@ class ThirdPartyApiController extends Controller
         }
     }
 
+    //--------------------------------------------------//
     private function getPackageIdPerThirdParty($third_party_app_id)
     {
         $lastPackageId = ThirdPartyPackage::where('third_party_application_id', $third_party_app_id)
@@ -449,6 +620,7 @@ class ThirdPartyApiController extends Controller
         return $lastPackageId ? $lastPackageId + 1 : 1;
     }
 
+    //--------------------------------------------------//
     private function gatAreaName($area_id)
     {
         $area = Area::find($area_id);

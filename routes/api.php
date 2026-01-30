@@ -29,4 +29,6 @@ Route::prefix('v1/third-party')->middleware('api.key')->group(function () {
     Route::get('/areas', [ThirdPartyApiController::class, 'getAreas']);
     //Route::get('/statuses', [ThirdPartyApiController::class, 'getStatuses']);
     Route::post('/set-webhook-url', [ThirdPartyApiController::class, 'setWebhookUrl']);
+    Route::post('/cancel-package/{id}', [ThirdPartyApiController::class, 'cancelPackage']);
+    Route::put('/update-package/{id}', [ThirdPartyApiController::class, 'updatePackage']);
 });
