@@ -44,6 +44,8 @@ class ThirdPartyPackage extends Model
         'delivery_date_1',
         'delivery_date_2',
         'delivery_date_3',
+        'id_per_user',
+        'reference_number',
     ];
 
     protected $casts = [

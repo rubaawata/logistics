@@ -30,7 +30,7 @@ class ThirdPartyApiController extends Controller
 
             // Shipping Information
             'area_id' => 'required|exists:areas,id',
-            'delivery_date' => 'required|date',
+            //'delivery_date' => 'required|date',
             'location_link' => 'nullable|string|max:255',
             'location_text' => 'nullable|string',
             'building_number' => 'nullable|string|max:255',
@@ -41,6 +41,7 @@ class ThirdPartyApiController extends Controller
             'description' => 'nullable|string',
             'notes' => 'nullable|string',
             'open_package' => 'nullable|boolean',
+            'reference_number' => 'nullable|string|max:100',
 
             // Items Array
             'items' => 'required|array|min:1',
@@ -85,6 +86,12 @@ class ThirdPartyApiController extends Controller
             $finalSellerPrice = $sellerPrice;
             $customerPrice = $sellerPrice + $deliveryCost;
             //--------------------------------------------------//
+            $packageIdPerThirdParty = $this->getPackageIdPerThirdParty($thirdPartyApp->id);
+            //dd($packageIdPerThirdParty);
+            //--------------------------------------------------//
+            // Calculate delivery date
+            $deliveryDate = now()->addDays(1);
+            //--------------------------------------------------//
             // Create package
             $package = ThirdPartyPackage::create([
                 'third_party_application_id' => $thirdPartyApp->id,
@@ -99,8 +106,8 @@ class ThirdPartyApiController extends Controller
                 'delivery_cost' => $deliveryCost,
                 'seller_price' => $finalSellerPrice,
                 'customer_price' => $customerPrice,
-                'delivery_date' => $request->delivery_date,
-                'delivery_date_1' => $request->delivery_date,
+                'delivery_date' => $deliveryDate,
+                'delivery_date_1' => $deliveryDate,
                 'location_link' => $request->location_link,
                 'location_text' => $request->location_text,
                 'building_number' => $request->building_number,
@@ -110,9 +117,11 @@ class ThirdPartyApiController extends Controller
                 'notes' => $request->notes,
                 'open_package' => $request->open_package ?? false,
                 'pieces_count' => array_sum(array_column($request->items, 'quantity')),
-                'status' => '5',
+                'status' => 'pending',
                 'number_of_attempts' => 0,
                 'delivery_fee_payer' => 'customer',
+                'reference_number' => $request->reference_number ?? null,
+                'id_per_user' => $packageIdPerThirdParty,
             ]);
             //--------------------------------------------------//
             // Create items
@@ -134,14 +143,15 @@ class ThirdPartyApiController extends Controller
                 'success' => true,
                 'message' => 'Package created successfully',
                 'data' => [
-                    'package_id' => $package->id,
+                    'package_id' => $package->id_per_user,
                     'seller_price' => $package->seller_price,
                     'customer_price' => $package->customer_price,
                     'delivery_cost' => $package->delivery_cost,
                     'items_count' => count($request->items),
                     'total_pieces' => $package->pieces_count,
-                    'status' => $package->status,
-                    'delivery_date' => $package->delivery_date,
+                    'status' => $this->getStatusesText($package->status),
+                    'reference_number' => $package->reference_number,
+                    //'delivery_date' => $package->delivery_date,
                 ]
             ], 201);
             //--------------------------------------------------//
@@ -156,10 +166,18 @@ class ThirdPartyApiController extends Controller
     }
 
     //--------------------------------------------------//
-    public function getPackage($id)
+    public function getPackage(Request $request, $id)
     {
-        $package = ThirdPartyPackage::with('items')
-            ->find($id);
+        $thirdPartyApp = $request->get('third_party_app');
+        if (!$thirdPartyApp) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Third party application not found'
+            ], 401);
+        }
+
+        //--------------------------------------------------//
+        $package = ThirdPartyPackage::with('items')->where('third_party_application_id', $thirdPartyApp->id)->where('id_per_user', $id)->first();
         //--------------------------------------------------//
         if (!$package) {
             return response()->json([
@@ -171,12 +189,28 @@ class ThirdPartyApiController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'package_id' => $package->id,
+                'package_id' => $package->id_per_user,
                 'seller_price' => $package->seller_price,
                 'customer_price' => $package->customer_price,
                 'delivery_cost' => $package->delivery_cost,
-                'status' => $package->status,
+                'status' => $this->getStatusesText($package->status),
+                'reference_number' => $package->reference_number,
+                'canceld_by' => $this->getCanceldByText($package->canceld_by),
                 'delivery_date' => $package->delivery_date,
+                'seller_name' => $package->seller_name,
+                'seller_company' => $package->seller_company,
+                'seller_phone' => $package->seller_phone,
+                'seller_email' => $package->seller_email,
+                'customer_name' => $package->customer_name,
+                'customer_phone' => $package->customer_phone,
+                'customer_email' => $package->customer_email,
+                'area_id' => $this->gatAreaName($package->area_id),
+                'location_link' => $package->location_link,
+                'location_text' => $package->location_text,
+                'building_number' => $package->building_number,
+                'floor_number' => $package->floor_number,
+                'apartment_number' => $package->apartment_number,
+                'description' => $package->description,
                 'items' => $package->items->map(function ($item) {
                     return [
                         'id' => $item->id,
@@ -190,6 +224,7 @@ class ThirdPartyApiController extends Controller
             ]
         ]);
     }
+
     //--------------------------------------------------//
     public function listPackages(Request $request)
     {
@@ -197,9 +232,13 @@ class ThirdPartyApiController extends Controller
 
         // Filter by third party application (from API key)
         $thirdPartyApp = $request->get('third_party_app');
-        if ($thirdPartyApp) {
-            $query->where('third_party_application_id', $thirdPartyApp->id);
+        if (!$thirdPartyApp) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Third party application not found'
+            ], 401);
         }
+        $query->where('third_party_application_id', $thirdPartyApp->id);
         //--------------------------------------------------//
         // Filter by status if provided
         if ($request->filled('status')) {
@@ -221,11 +260,50 @@ class ThirdPartyApiController extends Controller
         }
         //--------------------------------------------------//
         $perPage = (int) $request->get('per_page', 20);
-        $packages = $query->orderBy('id', 'desc')->paginate($perPage);
+        $packages = $query->orderBy('id_per_user', 'desc')->paginate($perPage);
+        //--------------------------------------------------//
+        // Map packages and items
+        $mappedPackages = $packages->map(function ($package) {
+            //dump($package->id_per_user);
+            return [
+                'package_id'       => $package->id_per_user,
+                'seller_price'     => $package->seller_price,
+                'customer_price'   => $package->customer_price,
+                'delivery_cost'    => $package->delivery_cost,
+                'status'           => $this->getStatusesText($package->status),
+                'reference_number' => $package->reference_number,
+                'canceld_by'       => $this->getCanceldByText($package->canceld_by),
+                'delivery_date'    => $package->delivery_date,
+                'seller_name'      => $package->seller_name,
+                'seller_company'   => $package->seller_company,
+                'seller_phone'     => $package->seller_phone,
+                'seller_email'     => $package->seller_email,
+                'customer_name'    => $package->customer_name,
+                'customer_phone'   => $package->customer_phone,
+                'customer_email'   => $package->customer_email,
+                'area_id'          => $this->gatAreaName($package->area_id),
+                'location_link'    => $package->location_link,
+                'location_text'    => $package->location_text,
+                'building_number'  => $package->building_number,
+                'floor_number'     => $package->floor_number,
+                'apartment_number' => $package->apartment_number,
+                'description'      => $package->description,
+                'items'            => $package->items->map(function ($item) {
+                    return [
+                        'id'          => $item->id,
+                        'name'        => $item->name,
+                        'description' => $item->description,
+                        'price'       => $item->price,
+                        'quantity'    => $item->quantity,
+                        'total'       => $item->price * $item->quantity,
+                    ];
+                }),
+            ];
+        });
         //--------------------------------------------------//
         return response()->json([
             'success' => true,
-            'data' => $packages->items(),
+            'data' => $mappedPackages,
             'pagination' => [
                 'current_page' => $packages->currentPage(),
                 'last_page' => $packages->lastPage(),
@@ -265,5 +343,115 @@ class ThirdPartyApiController extends Controller
             'data' => $areas
         ]);
     }
-}
 
+    //--------------------------------------------------//
+    public function setWebhookUrl(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+            //--------------------------------------------------//
+            // Validate request
+            $validator = Validator::make($request->all(), [
+                'webhook_url' => [
+                    'required',
+                    'url',
+                    'max:512',
+                    // extra safety: only allow http/https
+                    'regex:/^https?:\/\/.+$/i',
+                ],
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation error',
+                    'errors'  => $validator->errors(),
+                ], 422);
+            }
+            //--------------------------------------------------//
+            // Get authenticated user
+            $thirdPartyApp = $request->get('third_party_app');
+            if (!$thirdPartyApp) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Third party application not found'
+                ], 401);
+            }
+            //--------------------------------------------------//
+            // Save webhook URL
+            $thirdPartyApp->webhook_url = $request->webhook_url;
+            $thirdPartyApp->save();
+            //--------------------------------------------------//
+            DB::commit();
+            //--------------------------------------------------//
+            return response()->json([
+                'success' => true,
+                'message' => 'Webhook URL saved successfully',
+                'data' => [
+                    'webhook_url' => $thirdPartyApp->webhook_url,
+                ],
+            ], 200);
+            //--------------------------------------------------//
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save webhook URL',
+                //'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    
+    //--------------------------------------------------//
+    private function getStatusesText($status)
+    {
+        switch ($status) {
+            case 'pending':
+                return 'Pending';
+            case 'canceleld':
+                return 'Cancelled';
+            case 'delivered':
+                return 'Delivered';
+            case 'delayed':
+                return 'Delayed';
+            case 'received_from_seller':
+                return 'Received from Seller';
+            case 'out_of_delivery':
+                return 'Out of Delivery';
+            default:
+                return 'Unknown';
+        }
+    }
+
+    private function getCanceldByText($canceld_by)
+    {
+        switch ($canceld_by) {
+            case 'seller':
+                return 'Canceld By Seller';
+            case 'customer':
+                return 'Canceld By Customer';
+            case 'too_many_attempts':
+                return 'Canceld because of Too Many Attempts';
+            case 'system':
+                return 'Canceld By System';
+            case 'your_side':
+                return 'Canceld from Your Side';
+            default:
+                return 'Canceld By Unknown';
+        }
+    }
+
+    private function getPackageIdPerThirdParty($third_party_app_id)
+    {
+        $lastPackageId = ThirdPartyPackage::where('third_party_application_id', $third_party_app_id)
+            ->max('id_per_user');
+
+        return $lastPackageId ? $lastPackageId + 1 : 1;
+    }
+
+    private function gatAreaName($area_id)
+    {
+        $area = Area::find($area_id);
+        return $area ? $area->name : 'Unknown';
+    }
+}
