@@ -90,12 +90,15 @@ class ThirdPartyFinancialReportController extends Controller
 
                 // For cancelled packages (status 3), apply cancellation fee percentage to delivery_cost
                 // But only if package_enter_Hub is not 0 (delivery company took the order)
+                // For cancelled packages, do NOT apply discount percentage
                 if ($package->status == 3 && ($package->package_enter_Hub ?? 0) != 0) {
                     $deliveryCost = $deliveryCost * ($cancellationFeePercentage / 100);
+                    // For cancelled packages, don't apply discount - delivery_cost_after_discount = delivery_cost
+                    $deliveryCostAfterDiscount = $deliveryCost;
+                } else {
+                    // Apply discount to delivery_cost (what third party pays to delivery service)
+                    $deliveryCostAfterDiscount = $deliveryCost * (1 - ($discount / 100));
                 }
-
-                // Apply discount to delivery_cost (what third party pays to delivery service)
-                $deliveryCostAfterDiscount = $deliveryCost * (1 - ($discount / 100));
 
                 $totalShouldReceive += $shouldReceive;
                 $totalActuallyReceived += $paidAmount;
