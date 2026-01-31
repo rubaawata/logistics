@@ -139,6 +139,7 @@ class ThirdPartyApiController extends Controller
                 'status' => '6',
                 'number_of_attempts' => 0,
                 'delivery_fee_payer' => $request->delivery_fee_payer,
+                'package_enter_Hub' => false,
             ]);
             //--------------------------------------------------//
             // Create items
@@ -216,6 +217,7 @@ class ThirdPartyApiController extends Controller
                     'customer_must_pay' => $package->package_cost,
                     'delivery_cost' => $package->delivery_cost,
                     'status' => getPackageStatusEN($package->status),
+                    'failure_reason' => getReasonMessageEN($package->failure_reason),
                     'reference_number' => $package->reference_number,
                     'delivery_date' => $package->delivery_date,
                     // Seller Info
@@ -262,8 +264,6 @@ class ThirdPartyApiController extends Controller
             ], 500);
         }
     }
-
-
 
     //--------------------------------------------------//
     public function listPackages(Request $request)
@@ -317,6 +317,7 @@ class ThirdPartyApiController extends Controller
                     'customer_must_pay' => $package->package_cost,
                     'delivery_cost' => $package->delivery_cost,
                     'status' => getPackageStatusEN($package->status),
+                    'failure_reason' => getReasonMessageEN($package->failure_reason),
                     'reference_number' => $package->reference_number,
                     'delivery_date' => $package->delivery_date,
                     'open_package' => (bool) $package->open_package,
@@ -482,7 +483,7 @@ class ThirdPartyApiController extends Controller
             }
             //--------------------------------------------------//
             // Find the package
-            $package = ThirdPartyPackage::where('third_party_application_id', $thirdPartyApp->id)->where('id_per_user', $id)->first();
+            $package = Package::where('third_party_application_id', $thirdPartyApp->id)->where('id', $id)->first();
             if (!$package) {
                 return response()->json([
                     'success' => false,
@@ -491,28 +492,17 @@ class ThirdPartyApiController extends Controller
             }
 
             // Check if already cancelled or delivered
-            if (in_array($package->status, ['cancelled', 'delivered'])) {
+            if (in_array($package->status, [3, 1])) { // cancelled or delivered
                 return response()->json([
                     'success' => false,
-                    'message' => 'Package cannot be cancelled because it is already ' . $this->getStatusesText($package->status),
+                    'message' => 'Package cannot be cancelled because it is already ' . getPackageStatusEN($package->status),
                 ], 400);
             }
             //--------------------------------------------------//
             // Update package status
-            $package->status      = 'cancelled';
-            $package->canceled_by  = 'your_side';
+            $package->status      = 3;
+            $package->failure_reason  = 'cancelled_by_third_party';
             $package->save();
-            //--------------------------------------------------//
-            // If main_package_id exists, notify shipment service
-            if ($package->main_package_id) {
-                $this->shipmentService->markAsFailed(
-                    $package->main_package_id,
-                    [
-                        'reason'           => 'Cancelled by third party' . $thirdPartyApp->name,
-                        'cancel_total_cost' => 0,
-                    ]
-                );
-            }
             //--------------------------------------------------//
             DB::commit();
             //--------------------------------------------------//
@@ -520,9 +510,9 @@ class ThirdPartyApiController extends Controller
                 'success' => true,
                 'message' => 'Package cancelled successfully',
                 'data'    => [
-                    'package_id' => $package->id_per_user,
-                    'status'     => $package->status,
-                    'canceld_by' => $this->getCanceldByText($package->canceled_by),
+                    'package_id' => $package->id,
+                    'status'     => getPackageStatusEN($package->status),
+                    'failure_reason' => getReasonMessageEN($package->failure_reason),
                 ]
             ]);
             //--------------------------------------------------//

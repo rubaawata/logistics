@@ -31,6 +31,7 @@ class Package extends Model
         'status',
         'number_of_attempts',
         'delivery_fee_payer',
+        'package_enter_Hub'
     ];
     
     public function Seller()

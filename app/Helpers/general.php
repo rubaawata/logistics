@@ -47,11 +47,42 @@ if (!function_exists('getReasonMessage')) {
                 return 'سبب آخر';
             case 'too_many_attempts':
                 return 'تم إلغاء الشحنة بعد محاولات تسليم متعددة';
+            case 'cancelled_by_third_party':
+                return 'تم إلغاء الشحنة بواسطة الطرف الثالث';
             default:
                 return 'غير معروف';
         }
     }
 }
+
+if (!function_exists('getReasonMessageEN')) {
+    function getReasonMessageEN($reason)
+    {
+        switch ($reason) {
+            case 'no_answer':
+                return 'The customer did not answer the delivery agent';
+            case 'refused':
+                return 'The customer refused to accept the package';
+            case 'rescheduled':
+                return 'The customer rescheduled the delivery';
+            case 'rto':
+                return 'Returned to origin (RTO)';
+            case 'client_wrong_data':
+                return 'Customer information is incorrect';
+            case 'client_refuse_to_accept_order':
+                return 'The package has an issue and the customer refused to accept it';
+            case 'other':
+                return 'Other reason';
+            case 'too_many_attempts':
+                return 'The package was cancelled after multiple delivery attempts';
+            case 'cancelled_by_third_party':
+                return 'The package was cancelled by the third party';
+            default:
+                return 'Unknown';
+        }
+    }
+}
+
 
 if (!function_exists('getDeliveryFeePayer')) {
     function getDeliveryFeePayer($delivery_fee_payer, $status, $reason)
