@@ -17,6 +17,13 @@ return [
         5 => 'Pending',
         6 => 'Pending Acceptance'
     ],
+
+    'THIRD_PARTY_STATUS' => [
+        1 => 'Delivered',
+        3 => 'Cancelled',
+        5 => 'Pending',
+        6 => 'Pending Acceptance'
+    ],
     'DELIVERY_FEE_PAYER' => [
         'seller' => 'البائع',
         'customer' => 'الزبون',

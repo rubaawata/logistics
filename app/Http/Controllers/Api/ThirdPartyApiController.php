@@ -258,7 +258,7 @@ class ThirdPartyApiController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve package',
-                'error' => $e->getMessage(),
+                //'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -268,95 +268,119 @@ class ThirdPartyApiController extends Controller
     //--------------------------------------------------//
     public function listPackages(Request $request)
     {
-        $query = ThirdPartyPackage::with('items');
+        try {
+            $thirdPartyApp = $request->get('third_party_app');
+            if (!$thirdPartyApp) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Third party application not found'
+                ], 401);
+            }
 
-        // Filter by third party application (from API key)
-        $thirdPartyApp = $request->get('third_party_app');
-        if (!$thirdPartyApp) {
+            //--------------------------------------------------//
+            // Base query with relationships
+            $query = Package::with(['Seller', 'Customer', 'Area', 'items'])
+                ->where('third_party_application_id', $thirdPartyApp->id);
+
+            //--------------------------------------------------//
+            // Filter by status if provided
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            //--------------------------------------------------//
+            // Filter by area if provided
+            if ($request->filled('area_id')) {
+                $query->where('area_id', $request->area_id);
+            }
+
+            //--------------------------------------------------//
+            // Filter by date range
+            if ($request->filled('date_from')) {
+                $query->where('delivery_date', '>=', $request->date_from);
+            }
+            if ($request->filled('date_to')) {
+                $query->where('delivery_date', '<=', $request->date_to);
+            }
+
+            //--------------------------------------------------//
+            // Pagination
+            $perPage = (int) $request->get('per_page', 20);
+            $packages = $query->orderBy('id', 'desc')->paginate($perPage);
+
+            //--------------------------------------------------//
+            // Map packages
+            $mappedPackages = $packages->getCollection()->map(function ($package) {
+                return [
+                    'package_id' => $package->id,
+                    'seller_must_get' => $package->seller_cost,
+                    'customer_must_pay' => $package->package_cost,
+                    'delivery_cost' => $package->delivery_cost,
+                    'status' => getPackageStatusEN($package->status),
+                    'reference_number' => $package->reference_number,
+                    'delivery_date' => $package->delivery_date,
+                    'open_package' => (bool) $package->open_package,
+                    // Seller Info
+                    'seller_name' => $package->Seller->seller_name ?? null,
+                    'seller_company' => $package->Seller->company_name ?? null,
+                    'seller_phone' => $package->Seller->phone_number ?? null,
+                    'seller_email' => $package->Seller->email ?? null,
+                    'seller_location_link' => $package->Seller->location_link_1 ?? null,
+                    'seller_location_text' => $package->Seller->location_text_1 ?? null,
+                    // Customer Info
+                    'customer_name' => $package->Customer->name ?? null,
+                    'customer_phone' => $package->Customer->phone_number ?? null,
+                    'customer_email' => $package->Customer->email ?? null,
+                    // Area Info
+                    'area' => $package->Area->name ?? null,
+                    // Package Location
+                    'location_link' => $package->location_link,
+                    'location_text' => $package->location_text,
+                    'building_number' => $package->building_number,
+                    'floor_number' => $package->floor_number,
+                    'apartment_number' => $package->apartment_number,
+                    'description' => $package->description,
+                    'notes' => $package->notes,
+                    // Items
+                    'items' => $package->items->map(function ($item) {
+                        return [
+                            'id' => $item->id,
+                            'name' => $item->name,
+                            'description' => $item->description,
+                            'price' => $item->price,
+                            'quantity' => $item->quantity,
+                            'total' => $item->price * $item->quantity,
+                            'sort_order' => $item->sort_order,
+                        ];
+                    }),
+                ];
+            });
+
+            //--------------------------------------------------//
+            return response()->json([
+                'success' => true,
+                'data' => $mappedPackages,
+                'pagination' => [
+                    'current_page' => $packages->currentPage(),
+                    'last_page' => $packages->lastPage(),
+                    'per_page' => $packages->perPage(),
+                    'total' => $packages->total(),
+                ]
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Third party application not found'
-            ], 401);
+                'message' => 'Failed to retrieve packages',
+                //'error' => $e->getMessage(), // optionally for debugging
+            ], 500);
         }
-        $query->where('third_party_application_id', $thirdPartyApp->id);
-        //--------------------------------------------------//
-        // Filter by status if provided
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-        //--------------------------------------------------//
-        // Filter by area if provided
-        if ($request->filled('area_id')) {
-            $query->where('area_id', $request->area_id);
-        }
-        //--------------------------------------------------//
-        // Filter by date range
-        if ($request->has('date_from')) {
-            $query->where('created_at', '>=', $request->date_from);
-        }
-        //--------------------------------------------------//
-        if ($request->has('date_to')) {
-            $query->where('created_at', '<=', $request->date_to);
-        }
-        //--------------------------------------------------//
-        $perPage = (int) $request->get('per_page', 20);
-        $packages = $query->orderBy('id_per_user', 'desc')->paginate($perPage);
-        //--------------------------------------------------//
-        // Map packages and items
-        $mappedPackages = $packages->map(function ($package) {
-            //dump($package->id_per_user);
-            return [
-                'package_id'       => $package->id_per_user,
-                'seller_price'     => $package->seller_price,
-                'customer_price'   => $package->customer_price,
-                'delivery_cost'    => $package->delivery_cost,
-                'status'           => $this->getStatusesText($package->status),
-                'reference_number' => $package->reference_number,
-                'canceld_by'       => $this->getCanceldByText($package->canceled_by),
-                'delivery_date'    => $package->delivery_date,
-                'seller_name'      => $package->seller_name,
-                'seller_company'   => $package->seller_company,
-                'seller_phone'     => $package->seller_phone,
-                'seller_email'     => $package->seller_email,
-                'customer_name'    => $package->customer_name,
-                'customer_phone'   => $package->customer_phone,
-                'customer_email'   => $package->customer_email,
-                'area_id'          => $this->gatAreaName($package->area_id),
-                'location_link'    => $package->location_link,
-                'location_text'    => $package->location_text,
-                'building_number'  => $package->building_number,
-                'floor_number'     => $package->floor_number,
-                'apartment_number' => $package->apartment_number,
-                'description'      => $package->description,
-                'items'            => $package->items->map(function ($item) {
-                    return [
-                        'id'          => $item->id,
-                        'name'        => $item->name,
-                        'description' => $item->description,
-                        'price'       => $item->price,
-                        'quantity'    => $item->quantity,
-                        'total'       => $item->price * $item->quantity,
-                    ];
-                }),
-            ];
-        });
-        //--------------------------------------------------//
-        return response()->json([
-            'success' => true,
-            'data' => $mappedPackages,
-            'pagination' => [
-                'current_page' => $packages->currentPage(),
-                'last_page' => $packages->lastPage(),
-                'per_page' => $packages->perPage(),
-                'total' => $packages->total(),
-            ]
-        ]);
     }
+
 
     //--------------------------------------------------//
     public function getStatuses()
     {
-        $statuses = config('constants.PACKAGE_STATUS', []);
+        $statuses = config('constants.THIRD_PARTY_STATUS', []);
         //--------------------------------------------------//
         $data = [];
         foreach ($statuses as $code => $label) {
