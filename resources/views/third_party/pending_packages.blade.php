@@ -133,7 +133,7 @@
             <div class="modal-body">
                 <input type="hidden" name="package_id" id="package_id">
                 <div class="mb-3">
-                    <label for="delivery_id" class="form-label">اختر تاريخ الشحنة</label>
+                    <label for="delivery_id" class="form-label">اختر تاريخ توصيل الشحنة</label>
                     <div class="input-group">
                         <span class="input-group-addon open-datetimepicker"><a><i class="fa fa-calendar "></i></a></span>
                         <input type="text" title="Delivery Date" readonly="" required="" class="form-control notfocus input_date" name="delivery_date" id="delivery_date" value="{{now()->format('d/m/Y')}}">
