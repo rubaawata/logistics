@@ -161,7 +161,8 @@ class AdminPackagesController extends CBController
 	        */
         $this->sub_module = array();
         $this->sub_module[] = ['path' => 'packages/bill-of-lading/[id]', 'button_color' => 'success', 'button_icon' => 'fa fa-print', 'target' => '_blank'];
-
+        $this->sub_module[] = ['label' => 'القطع/المنتجات', 'path' => 'package_items', 'foreign_key' => 'package_id', 'button_color' => 'info', 'button_icon' => 'fa fa-list', 'parent_columns' => 'id'];
+        
         /*
 	        | ----------------------------------------------------------------------
 	        | Add More Action Button / Menu

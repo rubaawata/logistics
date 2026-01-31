@@ -69,7 +69,7 @@ class AdminThirdPartyApplicationsController extends CBController
         # OLD END FORM
 
         $this->sub_module = array();
-        $this->sub_module[] = ['label' => 'الشحنات', 'path' => 'third_party_packages', 'foreign_key' => 'third_party_application_id', 'button_color' => 'primary', 'button_icon' => 'fa fa-cube', 'parent_columns' => 'app_name'];
+        $this->sub_module[] = ['label' => 'الشحنات', 'path' =>'packages', 'foreign_key' => 'third_party_application_id', 'button_color' => 'primary', 'button_icon' => 'fa fa-cube', 'parent_columns' => 'app_name'];
 
         $this->addaction = array();
         $this->addaction[] = [
