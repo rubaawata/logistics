@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Package;
+use App\Models\ThirdPartyApplication;
 use Illuminate\Support\Carbon;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -29,29 +30,86 @@ class ThirdPartyFinancialReportExport implements FromCollection, WithHeadings, W
 
     public function collection()
     {
-        $query = Package::where('third_party_application_id', $this->thirdPartyId)
-            ->whereNotNull('third_party_application_id')
-            ->whereNotNull('receipt_date') // Only packages that have been received/delivered
-            ->with(['ThirdPartyApplication', 'Customer', 'Area']);
+        $thirdParty = ThirdPartyApplication::find($this->thirdPartyId);
+        $discount = $thirdParty ? ($thirdParty->discount ?? 0) : 0;
 
-        // Filter by receipt date (actual delivery date)
+        $query = Package::where('third_party_application_id', $this->thirdPartyId)
+            ->whereNotNull('third_party_application_id');
+            // Show all packages, but calculate only for status NOT 5 and NOT 6
+
+        // Filter by created_at date
         if ($this->dateFrom) {
-            $query->whereDate('receipt_date', '>=', Carbon::parse($this->dateFrom)->format('Y-m-d'));
+            $query->whereDate('created_at', '>=', Carbon::parse($this->dateFrom)->format('Y-m-d'));
         }
         if ($this->dateTo) {
-            $query->whereDate('receipt_date', '<=', Carbon::parse($this->dateTo)->format('Y-m-d'));
+            $query->whereDate('created_at', '<=', Carbon::parse($this->dateTo)->format('Y-m-d'));
         }
 
-        $packages = $query->orderBy('receipt_date', 'desc')->get();
+        $packages = $query->with(['ThirdPartyApplication', 'Customer', 'Area'])
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-        $totalSellerCost = $packages->sum('seller_cost') ?? 0;
-        $totalDeliveryCost = $packages->sum('delivery_cost') ?? 0;
-        $netAmount = $totalDeliveryCost - $totalSellerCost;
+        // Calculate costs with business logic - only for packages NOT status 5 and NOT 6
+        // Should receive from customer: package_cost + delivery_cost (when customer pays delivery)
+        // Actually received from customer: paid_amount
+        // Third party pays: seller_cost (seller_must_get)
+        // Third party profit = paid_amount - seller_cost
+        // Third party pays: delivery_cost_after_discount (to delivery service)
+        // Net = profit - delivery_cost_after_discount
+        
+        $totalShouldReceive = 0; // package_cost + delivery_cost (what they should get)
+        $totalActuallyReceived = 0; // paid_amount (what they actually got)
+        $totalSellerCost = 0; // What third party pays to sellers
+        $totalDeliveryCostBeforeDiscount = 0;
+        $totalDeliveryCostAfterDiscount = 0;
+
+        foreach ($packages as $package) {
+            // Only calculate costs for packages that are NOT status 5 and NOT 6
+            if (in_array($package->status, [5, 6])) {
+                continue; // Skip calculation for status 5 and 6
+            }
+
+            $packageCost = $package->package_cost ?? 0; // customer_must_pay
+            $paidAmount = $package->paid_amount ?? 0; // what third party actually received
+            $sellerCost = $package->seller_cost ?? 0; // seller_must_get (what third party pays)
+            $deliveryCost = $package->delivery_cost ?? 0;
+            $deliveryFeePayer = $package->delivery_fee_payer ?? 'customer';
+
+            // What third party should receive: package_cost + delivery_cost (if customer pays delivery)
+            $shouldReceive = $packageCost;
+            if ($deliveryFeePayer == 'customer') {
+                $shouldReceive += $deliveryCost;
+            }
+
+            // For cancelled packages (status 3), only 25% of delivery_cost
+            if ($package->status == 3) {
+                $deliveryCost = $deliveryCost * 0.25;
+            }
+
+            // Apply discount to delivery_cost (what third party pays to delivery service)
+            $deliveryCostAfterDiscount = $deliveryCost * (1 - ($discount / 100));
+
+            $totalShouldReceive += $shouldReceive;
+            $totalActuallyReceived += $paidAmount;
+            $totalSellerCost += $sellerCost;
+            $totalDeliveryCostBeforeDiscount += $deliveryCost;
+            $totalDeliveryCostAfterDiscount += $deliveryCostAfterDiscount;
+        }
+
+        // Third party profit = paid_amount - seller_cost (using actual received amount)
+        $totalProfit = $totalActuallyReceived - $totalSellerCost;
+        // Net = profit - delivery_cost_after_discount
+        $netAmount = $totalProfit - $totalDeliveryCostAfterDiscount;
 
         $packages->push((object)[
             'is_total_row' => true,
+            'should_receive' => $totalShouldReceive,
+            'actually_received' => $totalActuallyReceived,
             'seller_cost' => $totalSellerCost,
-            'delivery_cost' => $totalDeliveryCost,
+            'profit' => $totalProfit,
+            'delivery_cost_before_discount' => $totalDeliveryCostBeforeDiscount,
+            'delivery_cost_after_discount' => $totalDeliveryCostAfterDiscount,
+            'discount_amount' => $totalDeliveryCostBeforeDiscount - $totalDeliveryCostAfterDiscount,
             'net_amount' => $netAmount,
             'packages_count' => $packages->count() - 1,
         ]);
@@ -61,34 +119,90 @@ class ThirdPartyFinancialReportExport implements FromCollection, WithHeadings, W
 
     public function map($pkg): array
     {
+        $thirdParty = ThirdPartyApplication::find($this->thirdPartyId);
+        $discount = $thirdParty ? ($thirdParty->discount ?? 0) : 0;
+
         if (isset($pkg->is_total_row)) {
             return [
-                'المجموع الكلي',
+                '',
                 '',
                 '',
                 '',
                 '',
                 number_format($pkg->packages_count),
                 number_format($pkg->seller_cost, 2),
-                number_format($pkg->delivery_cost, 2),
+                number_format($pkg->should_receive, 2),
+                number_format($pkg->actually_received, 2),
+                number_format($pkg->profit, 2),
+                number_format($pkg->delivery_cost_before_discount, 2),
+                number_format($pkg->delivery_cost_after_discount, 2),
+                number_format($pkg->discount_amount, 2),
                 number_format($pkg->net_amount, 2),
             ];
         }
 
-        $sellerCost = $pkg->seller_cost ?? 0;
+        // For packages with status 5 or 6, show 0 in cost columns
+        if (in_array($pkg->status, [5, 6])) {
+            return [
+                $pkg->reference_number ?? '',
+                $pkg->Customer ? $pkg->Customer->name : '',
+                $pkg->Area ? $pkg->Area->name : '',
+                $pkg->created_at ? Carbon::parse($pkg->created_at)->format('Y-m-d') : '',
+                getPackageStatus($pkg->status, $pkg->delivery_date) ?? '---',
+                $pkg->pieces_count ?? 0,
+                '0.00', // seller_cost = 0 for status 5 and 6
+                '0.00', // should receive = 0
+                '0.00', // actually received = 0
+                '0.00', // profit = 0
+                '0.00', // delivery_cost before discount = 0
+                '0.00', // delivery_cost after discount = 0
+                '0.00', // discount amount = 0
+                '0.00', // net amount = 0
+            ];
+        }
+
+        $packageCost = $pkg->package_cost ?? 0; // customer_must_pay
+        $paidAmount = $pkg->paid_amount ?? 0; // what third party actually received
+        $sellerCost = $pkg->seller_cost ?? 0; // seller_must_get (what third party pays)
         $deliveryCost = $pkg->delivery_cost ?? 0;
-        $netAmount = $deliveryCost - $sellerCost;
+        $deliveryFeePayer = $pkg->delivery_fee_payer ?? 'customer';
+
+        // What third party should receive: package_cost + delivery_cost (if customer pays delivery)
+        $shouldReceive = $packageCost;
+        if ($deliveryFeePayer == 'customer') {
+            $shouldReceive += $deliveryCost;
+        }
+
+        // For cancelled packages (status 3), only 25% of delivery_cost
+        if ($pkg->status == 3) {
+            $deliveryCost = $deliveryCost * 0.25;
+        }
+
+        // Third party profit = paid_amount - seller_cost (using actual received amount)
+        $profit = $paidAmount - $sellerCost;
+
+        // Apply discount to delivery_cost (what third party pays to delivery service)
+        $deliveryCostAfterDiscount = $deliveryCost * (1 - ($discount / 100));
+        $discountAmount = $deliveryCost - $deliveryCostAfterDiscount;
+        
+        // Net = profit - delivery_cost_after_discount
+        $netAmount = $profit - $deliveryCostAfterDiscount;
 
         return [
             $pkg->reference_number ?? '',
-            $pkg->Customer->name ?? '',
+            $pkg->Customer ? $pkg->Customer->name : '',
             $pkg->Area ? $pkg->Area->name : '',
-            $pkg->receipt_date ? Carbon::parse($pkg->receipt_date)->format('Y-m-d') : '',
+            $pkg->created_at ? Carbon::parse($pkg->created_at)->format('Y-m-d') : '',
             getPackageStatus($pkg->status, $pkg->delivery_date) ?? '---',
             $pkg->pieces_count ?? 0,
-            number_format($sellerCost, 2),
-            number_format($deliveryCost, 2),
-            number_format($netAmount, 2),
+            number_format($sellerCost, 2), // What should pay to seller
+            number_format($shouldReceive, 2), // package_cost + delivery_cost (what they should get)
+            number_format($paidAmount, 2), // paid_amount (what they actually got)
+            number_format($profit, 2), // profit = paid_amount - seller_cost
+            number_format($deliveryCost, 2), // delivery_cost before discount
+            number_format($deliveryCostAfterDiscount, 2), // delivery_cost after discount
+            number_format($discountAmount, 2), // discount amount
+            number_format($netAmount, 2), // net = profit - delivery_cost_after_discount
         ];
     }
 
@@ -98,12 +212,17 @@ class ThirdPartyFinancialReportExport implements FromCollection, WithHeadings, W
             'رقم المرجع',
             'اسم العميل',
             'منطقة التوصيل',
-            'تاريخ الاستلام',
+            'تاريخ الإنشاء',
             'الحالة',
             'عدد القطع',
-            'المبلغ المستحق للطرف الثالث (seller_cost)',
-            'تكلفة التوصيل (delivery_cost)',
-            'المبلغ الصافي',
+            'المبلغ المستحق دفعه للتاجر (seller_cost)',
+            'المبلغ المستحق من العميل (package_cost + delivery_cost)',
+            'المبلغ المستلم فعلياً من العميل (paid_amount)',
+            'الربح (المستلم فعلياً - المدفوع للتاجر)',
+            'تكلفة التوصيل قبل الخصم',
+            'تكلفة التوصيل بعد الخصم',
+            'مبلغ الخصم على التوصيل',
+            'المبلغ الصافي للطرف الثالث (الربح - تكلفة التوصيل بعد الخصم)',
         ];
     }
 
@@ -126,13 +245,13 @@ class ThirdPartyFinancialReportExport implements FromCollection, WithHeadings, W
                 $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 
                 if ($this->dateFrom || $this->dateTo) {
-                    $dateRange = '';
+                    $dateRange = 'تاريخ الإنشاء: ';
                     if ($this->dateFrom && $this->dateTo) {
-                        $dateRange = 'من ' . Carbon::parse($this->dateFrom)->format('Y-m-d') . ' إلى ' . Carbon::parse($this->dateTo)->format('Y-m-d');
+                        $dateRange .= 'من ' . Carbon::parse($this->dateFrom)->format('Y-m-d') . ' إلى ' . Carbon::parse($this->dateTo)->format('Y-m-d');
                     } elseif ($this->dateFrom) {
-                        $dateRange = 'من ' . Carbon::parse($this->dateFrom)->format('Y-m-d');
+                        $dateRange .= 'من ' . Carbon::parse($this->dateFrom)->format('Y-m-d');
                     } elseif ($this->dateTo) {
-                        $dateRange = 'حتى ' . Carbon::parse($this->dateTo)->format('Y-m-d');
+                        $dateRange .= 'حتى ' . Carbon::parse($this->dateTo)->format('Y-m-d');
                     }
                     $sheet->setCellValue('A2', $dateRange);
                     $sheet->mergeCells('A2:' . $highestColumn . '2');

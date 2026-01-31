@@ -16,6 +16,7 @@ class Package extends Model
         'area_id',
         'delivery_cost',
         'package_cost',
+        'paid_amount',
         'delivery_date',
         'delivery_date_1',
         'receipt_date',
@@ -32,6 +33,13 @@ class Package extends Model
         'number_of_attempts',
         'delivery_fee_payer',
         'package_enter_Hub'
+    ];
+
+    protected $casts = [
+        'paid_amount' => 'decimal:2',
+        'delivery_cost' => 'decimal:2',
+        'package_cost' => 'decimal:2',
+        'seller_cost' => 'decimal:2',
     ];
     
     public function Seller()

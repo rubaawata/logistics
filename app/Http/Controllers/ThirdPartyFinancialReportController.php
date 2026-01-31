@@ -30,26 +30,92 @@ class ThirdPartyFinancialReportController extends Controller
         ];
 
         if ($selectedThirdPartyId && ($dateFrom || $dateTo)) {
-            $query = Package::where('third_party_application_id', $selectedThirdPartyId)
-                ->whereNotNull('third_party_application_id')
-                ->whereNotNull('receipt_date'); // Only packages that have been received/delivered
+            $thirdParty = ThirdPartyApplication::find($selectedThirdPartyId);
+            $discount = $thirdParty ? ($thirdParty->discount ?? 0) : 0;
 
-            // Filter by receipt date (actual delivery date)
+            $query = Package::where('third_party_application_id', $selectedThirdPartyId)
+                ->whereNotNull('third_party_application_id');
+                // Show all packages, but calculate only for status NOT 5 and NOT 6
+
+            // Filter by created_at date
             if ($dateFrom) {
-                $query->whereDate('receipt_date', '>=', Carbon::parse($dateFrom)->format('Y-m-d'));
+                $query->whereDate('created_at', '>=', Carbon::parse($dateFrom)->format('Y-m-d'));
             }
             if ($dateTo) {
-                $query->whereDate('receipt_date', '<=', Carbon::parse($dateTo)->format('Y-m-d'));
+                $query->whereDate('created_at', '<=', Carbon::parse($dateTo)->format('Y-m-d'));
             }
 
             $packages = $query->with(['ThirdPartyApplication', 'Customer', 'Area'])
-                ->orderBy('receipt_date', 'desc')
+                ->orderBy('created_at', 'desc')
                 ->get();
 
-            $summary['total_seller_cost'] = $packages->sum('seller_cost') ?? 0;
-            $summary['total_delivery_cost'] = $packages->sum('delivery_cost') ?? 0;
-            $summary['net_amount'] = $summary['total_delivery_cost'] - $summary['total_seller_cost'];
+            // Calculate costs with business logic - only for packages NOT status 5 and NOT 6
+            // Should receive from customer: package_cost + delivery_cost (when customer pays delivery)
+            // Actually received from customer: paid_amount
+            // Third party pays: seller_cost (seller_must_get)
+            // Third party profit = paid_amount - seller_cost
+            // Third party pays: delivery_cost_after_discount (to delivery service)
+            // Net = profit - delivery_cost_after_discount
+            
+            $totalShouldReceive = 0; // package_cost + delivery_cost (when customer pays) - what they should get
+            $totalActuallyReceived = 0; // paid_amount - what they actually got
+            $totalSellerCost = 0; // What third party pays to sellers
+            $totalDeliveryCostBeforeDiscount = 0;
+            $totalDeliveryCostAfterDiscount = 0;
+
+            foreach ($packages as $package) {
+                // Only calculate costs for packages that are NOT status 5 and NOT 6
+                if (in_array($package->status, [5, 6])) {
+                    continue; 
+                }
+
+                $packageCost = $package->package_cost ?? 0; // customer_must_pay
+                $paidAmount = $package->paid_amount ?? 0; // what third party actually received
+                $sellerCost = $package->seller_cost ?? 0; // seller_must_get (what third party pays)
+                $deliveryCost = $package->delivery_cost ?? 0;
+                $deliveryFeePayer = $package->delivery_fee_payer ?? 'customer';
+
+                // What third party should receive: package_cost + delivery_cost (if customer pays delivery)
+                $shouldReceive = $packageCost;
+                if ($deliveryFeePayer == 'customer') {
+                    $shouldReceive += $deliveryCost;
+                }
+
+                // For cancelled packages (status 3), only 25% of delivery_cost
+                if ($package->status == 3) {
+                    $deliveryCost = $deliveryCost * 0.25;
+                }
+
+                // Apply discount to delivery_cost (what third party pays to delivery service)
+                $deliveryCostAfterDiscount = $deliveryCost * (1 - ($discount / 100));
+
+                $totalShouldReceive += $shouldReceive;
+                $totalActuallyReceived += $paidAmount;
+                $totalSellerCost += $sellerCost;
+                $totalDeliveryCostBeforeDiscount += $deliveryCost;
+                $totalDeliveryCostAfterDiscount += $deliveryCostAfterDiscount;
+            }
+
+            // Third party profit = paid_amount - seller_cost (using actual received amount)
+            $totalProfit = $totalActuallyReceived - $totalSellerCost;
+            // Net = profit - delivery_cost_after_discount
+            $netAmount = $totalProfit - $totalDeliveryCostAfterDiscount;
+
+            $summary['total_should_receive'] = $totalShouldReceive; // package_cost + delivery_cost (what they should get)
+            $summary['total_actually_received'] = $totalActuallyReceived; // paid_amount (what they actually got)
+            $summary['total_seller_cost'] = $totalSellerCost; // What third party pays to sellers
+            $summary['total_profit'] = $totalProfit; // paid_amount - seller_cost
+            $summary['total_delivery_cost_before_discount'] = $totalDeliveryCostBeforeDiscount;
+            $summary['total_delivery_cost_after_discount'] = $totalDeliveryCostAfterDiscount;
+            $summary['discount_percentage'] = $discount;
+            $summary['discount_amount'] = $totalDeliveryCostBeforeDiscount - $totalDeliveryCostAfterDiscount;
+            $summary['net_amount'] = $netAmount; // profit - delivery_cost_after_discount
             $summary['packages_count'] = $packages->count();
+        }
+
+        $thirdParty = null;
+        if ($selectedThirdPartyId) {
+            $thirdParty = ThirdPartyApplication::find($selectedThirdPartyId);
         }
 
         return view('third_party_financial_report.index', compact(
@@ -58,7 +124,8 @@ class ThirdPartyFinancialReportController extends Controller
             'dateFrom',
             'dateTo',
             'packages',
-            'summary'
+            'summary',
+            'thirdParty'
         ));
     }
 
