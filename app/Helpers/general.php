@@ -87,9 +87,10 @@ if (!function_exists('getReasonMessageEN')) {
 if (!function_exists('getDeliveryFeePayer')) {
     function getDeliveryFeePayer($delivery_fee_payer, $status, $reason)
     {
-        if($status == 1 || ($status == 3 && $reason == 'client_refuse_to_accept_order')) { // show fee payer if status is delivered or cancelled and reason is Client_refuse_to_accept_order
+        /*if($status == 1 || ($status == 3 && $reason == 'client_refuse_to_accept_order')) { // show fee payer if status is delivered or cancelled and reason is Client_refuse_to_accept_order
             return config('constants.DELIVERY_FEE_PAYER')[$delivery_fee_payer] ?? '---';
         }
-        return '---';
+        return '---';*/
+        return config('constants.DELIVERY_FEE_PAYER')[$delivery_fee_payer] ?? '---';
     }
 }

@@ -26,7 +26,14 @@ class DeliveryDashboardController extends Controller
     public function dashboard()
     {
         $delivery = $this->authService->getAuthUser();
-        $shipments = $this->shipmentService->getTodayShipments($delivery->id);
+        $shipments = $this->shipmentService->getTodayShipments($delivery->id)
+            ->map(function ($shipment) {
+                if ($shipment->delivery_fee_payer !== 'customer') {
+                    $shipment->delivery_cost = 0;
+                }
+
+                return $shipment;
+            });
 
         return view('deliveries.dashboard', compact('delivery', 'shipments'));
     }
@@ -54,17 +61,16 @@ class DeliveryDashboardController extends Controller
             'cancel_total_cost' => 'required|numeric',
         ]);
 
-        if($validated['reason'] === 'rescheduled') {
+        if ($validated['reason'] === 'rescheduled') {
             $this->shipmentService->markAsDelayed($shipmentId, $validated);
-        } elseif(in_array($validated['reason'], ['no_answer', 'client_wrong_data'])) {
+        } elseif (in_array($validated['reason'], ['no_answer', 'client_wrong_data'])) {
             $this->shipmentService->markAsDelayedForTomorrow($shipmentId, $validated);
-        } elseif($validated['reason'] === 'client_refuse_to_accept_order') {
+        } elseif ($validated['reason'] === 'client_refuse_to_accept_order') {
             $this->shipmentService->markAsFailedBecauseOfSeller($shipmentId, $validated);
-
         } else {
             $this->shipmentService->markAsFailed($shipmentId, $validated);
         }
-        
+
         return response()->json([
             'success' => true,
             'message' => 'تم الإبلاغ عن تعذر التوصيل.',
@@ -78,7 +84,8 @@ class DeliveryDashboardController extends Controller
     }
 
     // TODO
-    public function report($id){
+    public function report($id)
+    {
         $delivery = Delivery::where('id', '=', $id)->first();
         /*$package = Package::where('delivery_id', $delivery->id)->whereDate('delivery_date', today())->with('Customer')->with('Seller')
             ->get();*/
@@ -101,7 +108,7 @@ class DeliveryDashboardController extends Controller
         return view('pdf.delivery_report', $data);
     }
 
- //TODO
+    //TODO
     public function seller($id)
     {
         $seller = Seller::where('id', '=', $id)->first();

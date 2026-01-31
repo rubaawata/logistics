@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ThirdPartyApiController;
+use App\Http\Controllers\AdminController;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,3 +33,6 @@ Route::prefix('v1/third-party')->middleware('api.key')->group(function () {
     Route::post('/cancel-package/{id}', [ThirdPartyApiController::class, 'cancelPackage']);
     Route::put('/update-package/{id}', [ThirdPartyApiController::class, 'updatePackage']);
 });
+
+
+Route::post('/admin/test', [AdminController::class, 'test']);
