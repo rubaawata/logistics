@@ -23,9 +23,11 @@ Route::get('/', function () {
 
 
 Route::get('/admin', [AdminController::class, 'getHome']);
+Route::get('/admin/pending-packages', [AdminController::class, 'getPendingPackages']);
 Route::post('/admin/update-package-status', [AdminController::class, 'updatePackageStatus']);
 Route::post('/admin/update-package-delivery', [AdminController::class, 'updatePackageDelivery']);
 Route::post('/admin/update-package-delivery-info', [AdminController::class, 'updatePackageDeliveryInfo']);
+Route::post('/admin/confirm-package-received', [AdminController::class, 'confirmPackageReceived']);
 
 Route::get('/admin/packages-count-report', [AdminController::class, 'getPackagesCountReport']);
 

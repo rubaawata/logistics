@@ -15,7 +15,9 @@ use App\Models\Delivery;
 use App\Models\Seller;
 use App\Models\Area;
 use App\Models\Customer;
+use App\Models\ThirdPartyApplication;
 use App\Services\ShipmentService;
+
 
 class AdminController extends CBController
 {
@@ -479,6 +481,54 @@ class AdminController extends CBController
         ]);
     }
 
+    public function getPendingPackages(Request $request)
+    {
+        if (!CRUDBooster::myId()) {
+            return redirect(CRUDBooster::adminPath('login'));
+        }
+        $selected_package_id = $request->input('package_id');
+        $selected_third_party_application_id = $request->input('third_party_application_id');
 
+        $packages = Package::with(['Seller', 'Customer', 'Delivery', 'Area'])
+                             ->where('status', '6');
 
+        if (!is_null($selected_package_id) && $selected_package_id !== 'null') {
+            $packages->where('id', $selected_package_id);
+        }
+
+        if (!is_null($selected_third_party_application_id) && $selected_third_party_application_id !== 'null') {
+            $packages->where('third_party_application_id', $selected_third_party_application_id);
+        }
+
+        $packages = $packages->get();
+
+        $third_party_applications = ThirdPartyApplication::all();
+
+        return view('third_party.pending_packages', compact('packages', 'third_party_applications', 'selected_package_id', 'selected_third_party_application_id'));
+    }
+
+    public function confirmPackageReceived(Request $request)
+    {
+        $package_id = $request->package_id;
+        $delivery_date = $request->delivery_date;
+
+        $delivery_date = new Carbon($delivery_date);
+        try {
+            Package::where('id', $package_id)
+                ->update([
+                    'delivery_date' => $delivery_date,
+                    'delivery_date_1' => $delivery_date,
+                    'status' => 5
+                ]);
+            return response()->json([
+                'success' => true
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
