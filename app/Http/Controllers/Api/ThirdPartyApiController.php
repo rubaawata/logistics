@@ -34,6 +34,8 @@ class ThirdPartyApiController extends Controller
             'seller_phone' => 'nullable|string|max:255',
             'seller_email' => 'nullable|email|max:255',
             'seller_must_get' => 'required|numeric|min:0',
+            'seller_location_link' => 'nullable|string|max:255',
+            'seller_location_text' => 'nullable|string',
 
             // Customer Information
             'customer_name' => 'required|string|max:255',
@@ -106,8 +108,8 @@ class ThirdPartyApiController extends Controller
                 $request->seller_phone,
                 $request->seller_email,
                 $thirdPartyApp->id,
-                $request->location_link,
-                $request->location_text
+                $request->seller_location_link,
+                $request->seller_location_text
             );
             //--------------------------------------------------//
             // Calculate delivery date
