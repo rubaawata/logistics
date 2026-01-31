@@ -124,7 +124,6 @@ class ThirdPartyFinancialReportExport implements FromCollection, WithHeadings, W
 
         if (isset($pkg->is_total_row)) {
             return [
-                'المجموع الكلي',
                 '',
                 '',
                 '',
