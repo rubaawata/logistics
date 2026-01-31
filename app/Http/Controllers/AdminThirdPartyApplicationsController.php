@@ -47,6 +47,7 @@ class AdminThirdPartyApplicationsController extends CBController
             return $row->is_active ? '<span class="label label-success">نشط</span>' : '<span class="label label-danger">غير نشط</span>';
         }];
         $this->col[] = ["label" => "الخصم (%)", "name" => "discount"];
+        $this->col[] = ["label" => "نسبة تحمل الإلغاء (%)", "name" => "cancellation_fee_percentage"];
         $this->col[] = ["label" => "عدد الطلبات", "name" => "request_count"];
         $this->col[] = ["label" => "آخر استخدام", "name" => "last_used_at"];
         # END COLUMNS DO NOT REMOVE THIS LINE
@@ -61,7 +62,7 @@ class AdminThirdPartyApplicationsController extends CBController
         $this->form[] = ['label' => 'رابط Webhook', 'name' => 'webhook_url', 'type' => 'text', 'validation' => 'nullable|url|max:512', 'width' => 'col-sm-10', 'placeholder' => 'https://example.com/webhook'];
         $this->form[] = ['label' => 'العناوين المسموحة (IP)', 'name' => 'allowed_ips', 'type' => 'text', 'validation' => 'nullable', 'width' => 'col-sm-10', 'placeholder' => 'مفصولة بفواصل: 192.168.1.1,10.0.0.1', 'help' => 'اتركه فارغاً للسماح بجميع العناوين'];
         $this->form[] = ['label' => 'الخصم (%)', 'name' => 'discount', 'type' => 'number', 'validation' => 'nullable|numeric|min:0|max:100', 'width' => 'col-sm-10', 'placeholder' => '0-100', 'help' => 'نسبة الخصم من 0 إلى 100', 'default' => 0];
-        $this->form[] = ['label' => 'نسبة تحمل الإلغاء (%)', 'name' => 'cancellation_fee_percentage', 'type' => 'number', 'validation' => 'nullable|numeric|min:0|max:100', 'width' => 'col-sm-10', 'placeholder' => '0-100', 'help' => 'نسبة من 0 إلى 100', 'default' => 0];
+        $this->form[] = ['label' => 'نسبة تحمل الإلغاء (%)', 'name' => 'cancellation_fee_percentage', 'type' => 'number', 'validation' => 'nullable|numeric|min:0|max:100', 'width' => 'col-sm-10', 'placeholder' => '0-100', 'help' => 'نسبة من تكلفة التوصيل التي يدفعها الطرف الثالث عند إلغاء الطلب (0-100). القيمة الافتراضية: 25%', 'default' => 25];
         $this->form[] = ['label' => 'نشط', 'name' => 'is_active', 'type' => 'switch', 'validation' => 'required', 'width' => 'col-sm-10'];
         # END FORM DO NOT REMOVE THIS LINE
 
