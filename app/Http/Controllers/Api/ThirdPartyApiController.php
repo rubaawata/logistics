@@ -112,9 +112,6 @@ class ThirdPartyApiController extends Controller
                 $request->seller_location_text
             );
             //--------------------------------------------------//
-            // Calculate delivery date
-            $deliveryDate = now();
-            //--------------------------------------------------//
             // Create package
             $package = Package::create([
                 'third_party_application_id' => $thirdPartyApp->id,
@@ -125,8 +122,6 @@ class ThirdPartyApiController extends Controller
                 'area_id' => $request->area_id,
                 'delivery_cost' => $deliveryCost,
                 'package_cost' => $request->customer_must_pay,
-                'delivery_date' => $deliveryDate,
-                'delivery_date_1' => $deliveryDate,
                 'location_link' => $request->location_link,
                 'location_text' => $request->location_text,
                 'building_number' => $request->building_number,
