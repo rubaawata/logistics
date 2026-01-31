@@ -184,62 +184,86 @@ class ThirdPartyApiController extends Controller
     //--------------------------------------------------//
     public function getPackage(Request $request, $id)
     {
-        $thirdPartyApp = $request->get('third_party_app');
-        if (!$thirdPartyApp) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Third party application not found'
-            ], 401);
-        }
+        try {
+            $thirdPartyApp = $request->get('third_party_app');
+            if (!$thirdPartyApp) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Third party application not found'
+                ], 401);
+            }
 
-        //--------------------------------------------------//
-        $package = ThirdPartyPackage::with('items')->where('third_party_application_id', $thirdPartyApp->id)->where('id_per_user', $id)->first();
-        //--------------------------------------------------//
-        if (!$package) {
+            //--------------------------------------------------//
+            // Load package with related seller, customer, area, and items
+            $package = Package::with(['Seller', 'Customer', 'Area', 'items'])
+                ->where('third_party_application_id', $thirdPartyApp->id)
+                ->where('id', $id)
+                ->first();
+
+            if (!$package) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Package not found'
+                ], 404);
+            }
+
+            //--------------------------------------------------//
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'package_id' => $package->id,
+                    'seller_must_get' => $package->seller_cost,
+                    'customer_must_pay' => $package->package_cost,
+                    'delivery_cost' => $package->delivery_cost,
+                    'status' => getPackageStatusEN($package->status),
+                    'reference_number' => $package->reference_number,
+                    'delivery_date' => $package->delivery_date,
+                    // Seller Info
+                    'seller_name' => $package->Seller->seller_name ?? null,
+                    'seller_company' => $package->Seller->company_name ?? null,
+                    'seller_phone' => $package->Seller->phone_number ?? null,
+                    'seller_email' => $package->Seller->email ?? null,
+                    'seller_location_link' => $package->Seller->location_link_1 ?? null,
+                    'seller_location_text' => $package->Seller->location_text_1 ?? null,
+                    // Customer Info
+                    'customer_name' => $package->Customer->name ?? null,
+                    'customer_phone' => $package->Customer->phone_number ?? null,
+                    'customer_email' => $package->Customer->email ?? null,
+                    // Area Info
+                    'area' => $package->Area->name ?? null,
+                    // Package Location
+                    'location_link' => $package->location_link,
+                    'location_text' => $package->location_text,
+                    'building_number' => $package->building_number,
+                    'floor_number' => $package->floor_number,
+                    'apartment_number' => $package->apartment_number,
+                    'description' => $package->description,
+                    'notes' => $package->notes,
+                    'open_package' => (bool) $package->open_package,
+                    // Items
+                    'items' => $package->items->map(function ($item) {
+                        return [
+                            'id' => $item->id,
+                            'name' => $item->name,
+                            'description' => $item->description,
+                            'price' => $item->price,
+                            'quantity' => $item->quantity,
+                            'total' => $item->price * $item->quantity,
+                            'sort_order' => $item->sort_order,
+                        ];
+                    }),
+                ]
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Package not found'
-            ], 404);
+                'message' => 'Failed to retrieve package',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-        //--------------------------------------------------//
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'package_id' => $package->id_per_user,
-                'seller_price' => $package->seller_price,
-                'customer_price' => $package->customer_price,
-                'delivery_cost' => $package->delivery_cost,
-                'status' => $this->getStatusesText($package->status),
-                'reference_number' => $package->reference_number,
-                'canceld_by' => $this->getCanceldByText($package->canceled_by),
-                'delivery_date' => $package->delivery_date,
-                'seller_name' => $package->seller_name,
-                'seller_company' => $package->seller_company,
-                'seller_phone' => $package->seller_phone,
-                'seller_email' => $package->seller_email,
-                'customer_name' => $package->customer_name,
-                'customer_phone' => $package->customer_phone,
-                'customer_email' => $package->customer_email,
-                'area_id' => $this->gatAreaName($package->area_id),
-                'location_link' => $package->location_link,
-                'location_text' => $package->location_text,
-                'building_number' => $package->building_number,
-                'floor_number' => $package->floor_number,
-                'apartment_number' => $package->apartment_number,
-                'description' => $package->description,
-                'items' => $package->items->map(function ($item) {
-                    return [
-                        'id' => $item->id,
-                        'name' => $item->name,
-                        'description' => $item->description,
-                        'price' => $item->price,
-                        'quantity' => $item->quantity,
-                        'total' => $item->total,
-                    ];
-                }),
-            ]
-        ]);
     }
+
+
 
     //--------------------------------------------------//
     public function listPackages(Request $request)

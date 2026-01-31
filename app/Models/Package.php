@@ -53,4 +53,9 @@ class Package extends Model
     {
         return $this->belongsTo(Area::class, 'area_id', 'id');
     }
+
+    public function items()
+    {
+        return $this->hasMany(PackageItem::class, 'package_id')->orderBy('sort_order');
+    }
 }
