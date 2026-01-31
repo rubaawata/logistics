@@ -77,7 +77,7 @@
                         </div>
                         <div class="col-lg-3">
                             <div class="form-group">
-                                <label class="control-label">من تاريخ الاستلام</label>
+                                <label class="control-label">من تاريخ الإنشاء</label>
                                 <div class="input-group">
                                     <input type="date" name="date_from" class="form-control" value="{{$dateFrom}}" required>
                                 </div>
@@ -85,7 +85,7 @@
                         </div>
                         <div class="col-lg-3">
                             <div class="form-group">
-                                <label class="control-label">إلى تاريخ الاستلام</label>
+                                <label class="control-label">إلى تاريخ الإنشاء</label>
                                 <div class="input-group">
                                     <input type="date" name="date_to" class="form-control" value="{{$dateTo}}" required>
                                 </div>
@@ -110,23 +110,48 @@
                         <h3 class="box-title">ملخص التقرير</h3>
                     </div>
                     <div class="box-body">
+                        @if($thirdParty)
+                            <div class="alert alert-info">
+                                <strong>نسبة الخصم للطرف الثالث:</strong> {{number_format($thirdParty->discount ?? 0, 2)}}%
+                            </div>
+                        @endif
                         <div class="summary-box">
                             <div class="summary-item">
                                 <span class="summary-label">عدد الشحنات</span>
                                 <span class="summary-value">{{$summary['packages_count']}}</span>
                             </div>
                             <div class="summary-item">
-                                <span class="summary-label">المبلغ المستحق للطرف الثالث (seller_cost)</span>
-                                <span class="summary-value">{{number_format($summary['total_seller_cost'], 2)}} د.أ</span>
+                                <span class="summary-label">المبلغ المستحق دفعه للتجار (seller_cost)</span>
+                                <span class="summary-value">{{number_format($summary['total_seller_cost'], 2)}} </span>
                             </div>
                             <div class="summary-item">
-                                <span class="summary-label">تكلفة التوصيل (delivery_cost)</span>
-                                <span class="summary-value">{{number_format($summary['total_delivery_cost'], 2)}} د.أ</span>
+                                <span class="summary-label">المبلغ المستحق من العملاء (package_cost + delivery_cost)</span>
+                                <span class="summary-value">{{number_format($summary['total_should_receive'], 2)}} </span>
                             </div>
                             <div class="summary-item">
-                                <span class="summary-label">المبلغ الصافي</span>
+                                <span class="summary-label">المبلغ المستلم فعلياً من العملاء (paid_amount)</span>
+                                <span class="summary-value">{{number_format($summary['total_actually_received'], 2)}} </span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">الربح (المستلم فعلياً - المدفوع للتاجر)</span>
+                                <span class="summary-value">{{number_format($summary['total_profit'], 2)}} </span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">تكلفة التوصيل قبل الخصم</span>
+                                <span class="summary-value">{{number_format($summary['total_delivery_cost_before_discount'], 2)}} </span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">تكلفة التوصيل بعد الخصم</span>
+                                <span class="summary-value">{{number_format($summary['total_delivery_cost_after_discount'], 2)}} </span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">مبلغ الخصم على التوصيل</span>
+                                <span class="summary-value">{{number_format($summary['discount_amount'], 2)}} </span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">المبلغ الصافي للطرف الثالث (الربح - تكلفة التوصيل بعد الخصم)</span>
                                 <span class="summary-value {{$summary['net_amount'] >= 0 ? 'positive' : 'negative'}}">
-                                    {{number_format($summary['net_amount'], 2)}} د.أ
+                                    {{number_format($summary['net_amount'], 2)}} 
                                 </span>
                             </div>
                         </div>
@@ -159,32 +184,81 @@
                                     <th>رقم المرجع</th>
                                     <th>اسم العميل</th>
                                     <th>منطقة التوصيل</th>
-                                    <th>تاريخ الاستلام</th>
+                                    <th>تاريخ الإنشاء</th>
                                     <th>الحالة</th>
                                     <th>عدد القطع</th>
-                                    <th>المبلغ المستحق للطرف الثالث</th>
-                                    <th>تكلفة التوصيل</th>
-                                    <th>المبلغ الصافي</th>
+                                    <th>المبلغ المستحق دفعه للتاجر (seller_cost)</th>
+                                    <th>المبلغ المستحق من العميل (package_cost + delivery_cost)</th>
+                                    <th>المبلغ المستلم فعلياً من العميل (paid_amount)</th>
+                                    <th>الربح (المستلم فعلياً - المدفوع للتاجر)</th>
+                                    <th>تكلفة التوصيل قبل الخصم</th>
+                                    <th>تكلفة التوصيل بعد الخصم</th>
+                                    <th>مبلغ الخصم على التوصيل</th>
+                                    <th>المبلغ الصافي للطرف الثالث</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($packages as $package)
                                     @php
-                                        $sellerCost = $package->seller_cost ?? 0;
-                                        $deliveryCost = $package->delivery_cost ?? 0;
-                                        $netAmount = $deliveryCost - $sellerCost;
+                                        // For packages with status 5 or 6, show 0 in cost columns
+                                        if (in_array($package->status, [5, 6])) {
+                                            $shouldReceive = 0;
+                                            $actuallyReceived = 0;
+                                            $sellerCost = 0;
+                                            $profit = 0;
+                                            $deliveryCost = 0;
+                                            $deliveryCostAfterDiscount = 0;
+                                            $discountAmount = 0;
+                                            $netAmount = 0;
+                                        } else {
+                                            $packageCost = $package->package_cost ?? 0; // customer_must_pay
+                                            $paidAmount = $package->paid_amount ?? 0; // what third party actually received
+                                            $sellerCost = $package->seller_cost ?? 0; // seller_must_get (what third party pays)
+                                            $deliveryCost = $package->delivery_cost ?? 0;
+                                            $deliveryFeePayer = $package->delivery_fee_payer ?? 'customer';
+                                            
+                                            // What third party should receive: package_cost + delivery_cost (if customer pays delivery)
+                                            $shouldReceive = $packageCost;
+                                            if ($deliveryFeePayer == 'customer') {
+                                                $shouldReceive += $deliveryCost;
+                                            }
+                                            
+                                            // For cancelled packages (status 3), only 25% of delivery_cost
+                                            if ($package->status == 3) {
+                                                $deliveryCost = $deliveryCost * 0.25;
+                                            }
+                                            
+                                            // Third party profit = paid_amount - seller_cost (using actual received amount)
+                                            $profit = $paidAmount - $sellerCost;
+                                            
+                                            // Apply discount to delivery_cost (what third party pays to delivery service)
+                                            $discount = $thirdParty ? ($thirdParty->discount ?? 0) : 0;
+                                            $deliveryCostAfterDiscount = $deliveryCost * (1 - ($discount / 100));
+                                            $discountAmount = $deliveryCost - $deliveryCostAfterDiscount;
+                                            
+                                            // Net = profit - delivery_cost_after_discount
+                                            $netAmount = $profit - $deliveryCostAfterDiscount;
+                                            
+                                            // Set actuallyReceived for display
+                                            $actuallyReceived = $paidAmount;
+                                        }
                                     @endphp
                                     <tr>
                                         <td>{{$package->reference_number ?? '-'}}</td>
                                         <td>{{$package->Customer ? $package->Customer->name : '-'}}</td>
                                         <td>{{$package->Area ? $package->Area->name : '-'}}</td>
-                                        <td>{{$package->receipt_date ? \Carbon\Carbon::parse($package->receipt_date)->format('Y-m-d') : '-'}}</td>
+                                        <td>{{$package->created_at ? \Carbon\Carbon::parse($package->created_at)->format('Y-m-d') : '-'}}</td>
                                         <td>{{getPackageStatus($package->status, $package->delivery_date) ?? '-'}}</td>
                                         <td>{{$package->pieces_count ?? 0}}</td>
-                                        <td>{{number_format($sellerCost, 2)}} د.أ</td>
-                                        <td>{{number_format($deliveryCost, 2)}} د.أ</td>
+                                        <td>{{number_format($sellerCost, 2)}} </td>
+                                        <td>{{number_format($shouldReceive, 2)}} </td>
+                                        <td>{{number_format($actuallyReceived, 2)}} </td>
+                                        <td>{{number_format($profit, 2)}} </td>
+                                        <td>{{number_format($deliveryCost, 2)}} </td>
+                                        <td>{{number_format($deliveryCostAfterDiscount, 2)}} </td>
+                                        <td>{{number_format($discountAmount, 2)}} </td>
                                         <td class="{{$netAmount >= 0 ? 'text-success' : 'text-danger'}}">
-                                            {{number_format($netAmount, 2)}} د.أ
+                                            {{number_format($netAmount, 2)}} 
                                         </td>
                                     </tr>
                                 @endforeach
@@ -192,10 +266,15 @@
                             <tfoot>
                                 <tr style="font-weight: bold; background-color: #f5f5f5;">
                                     <td colspan="6" style="text-align: left;">المجموع الكلي</td>
-                                    <td>{{number_format($summary['total_seller_cost'], 2)}} د.أ</td>
-                                    <td>{{number_format($summary['total_delivery_cost'], 2)}} د.أ</td>
+                                    <td>{{number_format($summary['total_seller_cost'], 2)}} </td>
+                                    <td>{{number_format($summary['total_should_receive'], 2)}} </td>
+                                    <td>{{number_format($summary['total_actually_received'], 2)}} </td>
+                                    <td>{{number_format($summary['total_profit'], 2)}} </td>
+                                    <td>{{number_format($summary['total_delivery_cost_before_discount'], 2)}} </td>
+                                    <td>{{number_format($summary['total_delivery_cost_after_discount'], 2)}} </td>
+                                    <td>{{number_format($summary['discount_amount'], 2)}} </td>
                                     <td class="{{$summary['net_amount'] >= 0 ? 'text-success' : 'text-danger'}}">
-                                        {{number_format($summary['net_amount'], 2)}} د.أ
+                                        {{number_format($summary['net_amount'], 2)}} 
                                     </td>
                                 </tr>
                             </tfoot>
@@ -223,7 +302,7 @@
             <div class="box">
                 <div class="box-body">
                     <div class="alert alert-info">
-                        <i class="fa fa-info-circle"></i> يرجى اختيار الطرف الثالث وتاريخ الاستلام لعرض التقرير.
+                        <i class="fa fa-info-circle"></i> يرجى اختيار الطرف الثالث وتاريخ الإنشاء لعرض التقرير.
                     </div>
                 </div>
             </div>
