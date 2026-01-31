@@ -17,6 +17,7 @@ class ThirdPartyApplication extends Model
         'api_secret',
         'is_active',
         'discount',
+        'cancellation_fee_percentage',
         'last_used_at',
         'request_count',
         'webhook_url',

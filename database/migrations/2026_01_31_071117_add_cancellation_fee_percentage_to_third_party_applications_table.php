@@ -14,8 +14,11 @@ class AddCancellationFeePercentageToThirdPartyApplicationsTable extends Migratio
     public function up()
     {
         Schema::table('third_party_applications', function (Blueprint $table) {
-            $table->unsignedTinyInteger('cancellation_fee_percentage')
-            ->nullable();
+            $table->decimal('cancellation_fee_percentage', 5, 2)
+                ->default(25)
+                ->nullable()
+                ->after('discount')
+                ->comment('Percentage of delivery cost that third party pays if order is cancelled (0-100)');
         });
     }
 

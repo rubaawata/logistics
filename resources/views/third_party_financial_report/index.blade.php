@@ -239,10 +239,11 @@
                                                     $shouldReceive += $deliveryCost;
                                                 }
                                                 
-                                                // For cancelled packages (status 3), only 25% of delivery_cost
+                                                // For cancelled packages (status 3), apply cancellation fee percentage to delivery_cost
                                                 // But only if package_enter_Hub is not 0 (delivery company took the order)
+                                                $cancellationFeePercentage = $thirdParty ? ($thirdParty->cancellation_fee_percentage ?? 25) : 25; // Default to 25% if not set
                                                 if ($package->status == 3 && ($package->package_enter_Hub ?? 0) != 0) {
-                                                    $deliveryCost = $deliveryCost * 0.25;
+                                                    $deliveryCost = $deliveryCost * ($cancellationFeePercentage / 100);
                                                 }
                                                 
                                                 // Third party profit = paid_amount - seller_cost (using actual received amount)

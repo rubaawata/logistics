@@ -32,6 +32,7 @@ class ThirdPartyFinancialReportController extends Controller
         if ($selectedThirdPartyId && ($dateFrom || $dateTo)) {
             $thirdParty = ThirdPartyApplication::find($selectedThirdPartyId);
             $discount = $thirdParty ? ($thirdParty->discount ?? 0) : 0;
+            $cancellationFeePercentage = $thirdParty ? ($thirdParty->cancellation_fee_percentage ?? 25) : 25; 
 
             $query = Package::where('third_party_application_id', $selectedThirdPartyId)
                 ->whereNotNull('third_party_application_id');
@@ -87,10 +88,10 @@ class ThirdPartyFinancialReportController extends Controller
                     $shouldReceive += $deliveryCost;
                 }
 
-                // For cancelled packages (status 3), only 25% of delivery_cost
+                // For cancelled packages (status 3), apply cancellation fee percentage to delivery_cost
                 // But only if package_enter_Hub is not 0 (delivery company took the order)
                 if ($package->status == 3 && ($package->package_enter_Hub ?? 0) != 0) {
-                    $deliveryCost = $deliveryCost * 0.25;
+                    $deliveryCost = $deliveryCost * ($cancellationFeePercentage / 100);
                 }
 
                 // Apply discount to delivery_cost (what third party pays to delivery service)
