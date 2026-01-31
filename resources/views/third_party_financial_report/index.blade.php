@@ -181,6 +181,7 @@
                         <table id="packages-table" class="table table-hover table-striped table-bordered">
                             <thead>
                                 <tr>
+                                    <th>رقم الشحنة</th>
                                     <th>رقم المرجع</th>
                                     <th>اسم العميل</th>
                                     <th>منطقة التوصيل</th>
@@ -195,6 +196,7 @@
                                     <th>تكلفة التوصيل بعد الخصم</th>
                                     <th>مبلغ الخصم على التوصيل</th>
                                     <th>المبلغ الصافي للطرف الثالث</th>
+                                    <th>سبب الفشل</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -211,39 +213,56 @@
                                             $discountAmount = 0;
                                             $netAmount = 0;
                                         } else {
-                                            $packageCost = $package->package_cost ?? 0; // customer_must_pay
-                                            $paidAmount = $package->paid_amount ?? 0; // what third party actually received
-                                            $sellerCost = $package->seller_cost ?? 0; // seller_must_get (what third party pays)
-                                            $deliveryCost = $package->delivery_cost ?? 0;
-                                            $deliveryFeePayer = $package->delivery_fee_payer ?? 'customer';
+                                            // If status is 3 (cancelled) AND package_enter_Hub is 0, delivery company didn't take the order
+                                            // So don't take money - set all amounts to 0
+                                            $isNotTakenByDelivery = ($package->status == 3 && ($package->package_enter_Hub ?? 0) == 0);
                                             
-                                            // What third party should receive: package_cost + delivery_cost (if customer pays delivery)
-                                            $shouldReceive = $packageCost;
-                                            if ($deliveryFeePayer == 'customer') {
-                                                $shouldReceive += $deliveryCost;
+                                            if ($isNotTakenByDelivery) {
+                                                $shouldReceive = 0;
+                                                $actuallyReceived = 0;
+                                                $sellerCost = 0;
+                                                $profit = 0;
+                                                $deliveryCost = 0;
+                                                $deliveryCostAfterDiscount = 0;
+                                                $discountAmount = 0;
+                                                $netAmount = 0;
+                                            } else {
+                                                $packageCost = $package->package_cost ?? 0; // customer_must_pay
+                                                $paidAmount = $package->paid_amount ?? 0; // what third party actually received
+                                                $sellerCost = $package->seller_cost ?? 0; // seller_must_get (what third party pays)
+                                                $deliveryCost = $package->delivery_cost ?? 0;
+                                                $deliveryFeePayer = $package->delivery_fee_payer ?? 'customer';
+                                                
+                                                // What third party should receive: package_cost + delivery_cost (if customer pays delivery)
+                                                $shouldReceive = $packageCost;
+                                                if ($deliveryFeePayer == 'customer') {
+                                                    $shouldReceive += $deliveryCost;
+                                                }
+                                                
+                                                // For cancelled packages (status 3), only 25% of delivery_cost
+                                                // But only if package_enter_Hub is not 0 (delivery company took the order)
+                                                if ($package->status == 3 && ($package->package_enter_Hub ?? 0) != 0) {
+                                                    $deliveryCost = $deliveryCost * 0.25;
+                                                }
+                                                
+                                                // Third party profit = paid_amount - seller_cost (using actual received amount)
+                                                $profit = $paidAmount - $sellerCost;
+                                                
+                                                // Apply discount to delivery_cost (what third party pays to delivery service)
+                                                $discount = $thirdParty ? ($thirdParty->discount ?? 0) : 0;
+                                                $deliveryCostAfterDiscount = $deliveryCost * (1 - ($discount / 100));
+                                                $discountAmount = $deliveryCost - $deliveryCostAfterDiscount;
+                                                
+                                                // Net = profit - delivery_cost_after_discount
+                                                $netAmount = $profit - $deliveryCostAfterDiscount;
+                                                
+                                                // Set actuallyReceived for display
+                                                $actuallyReceived = $paidAmount;
                                             }
-                                            
-                                            // For cancelled packages (status 3), only 25% of delivery_cost
-                                            if ($package->status == 3) {
-                                                $deliveryCost = $deliveryCost * 0.25;
-                                            }
-                                            
-                                            // Third party profit = paid_amount - seller_cost (using actual received amount)
-                                            $profit = $paidAmount - $sellerCost;
-                                            
-                                            // Apply discount to delivery_cost (what third party pays to delivery service)
-                                            $discount = $thirdParty ? ($thirdParty->discount ?? 0) : 0;
-                                            $deliveryCostAfterDiscount = $deliveryCost * (1 - ($discount / 100));
-                                            $discountAmount = $deliveryCost - $deliveryCostAfterDiscount;
-                                            
-                                            // Net = profit - delivery_cost_after_discount
-                                            $netAmount = $profit - $deliveryCostAfterDiscount;
-                                            
-                                            // Set actuallyReceived for display
-                                            $actuallyReceived = $paidAmount;
                                         }
                                     @endphp
                                     <tr>
+                                        <td>{{$package->id ?? '-'}}</td>
                                         <td>{{$package->reference_number ?? '-'}}</td>
                                         <td>{{$package->Customer ? $package->Customer->name : '-'}}</td>
                                         <td>{{$package->Area ? $package->Area->name : '-'}}</td>
@@ -260,6 +279,7 @@
                                         <td class="{{$netAmount >= 0 ? 'text-success' : 'text-danger'}}">
                                             {{number_format($netAmount, 2)}} 
                                         </td>
+                                        <td>{{$package->failure_reason ? getReasonMessage($package->failure_reason) : '-'}}</td>
                                     </tr>
                                 @endforeach
                             </tbody>

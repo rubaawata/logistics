@@ -69,6 +69,12 @@ class ThirdPartyFinancialReportExport implements FromCollection, WithHeadings, W
                 continue; // Skip calculation for status 5 and 6
             }
 
+            // If status is 3 (cancelled) AND package_enter_Hub is 0, delivery company didn't take the order
+            // So don't take money - set all amounts to 0
+            if ($package->status == 3 && ($package->package_enter_Hub ?? 0) == 0) {
+                continue; // Skip calculation - all amounts are 0
+            }
+
             $packageCost = $package->package_cost ?? 0; // customer_must_pay
             $paidAmount = $package->paid_amount ?? 0; // what third party actually received
             $sellerCost = $package->seller_cost ?? 0; // seller_must_get (what third party pays)
@@ -82,7 +88,8 @@ class ThirdPartyFinancialReportExport implements FromCollection, WithHeadings, W
             }
 
             // For cancelled packages (status 3), only 25% of delivery_cost
-            if ($package->status == 3) {
+            // But only if package_enter_Hub is not 0 (delivery company took the order)
+            if ($package->status == 3 && ($package->package_enter_Hub ?? 0) != 0) {
                 $deliveryCost = $deliveryCost * 0.25;
             }
 
@@ -129,6 +136,8 @@ class ThirdPartyFinancialReportExport implements FromCollection, WithHeadings, W
                 '',
                 '',
                 '',
+                '',
+                '',
                 number_format($pkg->packages_count),
                 number_format($pkg->seller_cost, 2),
                 number_format($pkg->should_receive, 2),
@@ -144,6 +153,7 @@ class ThirdPartyFinancialReportExport implements FromCollection, WithHeadings, W
         // For packages with status 5 or 6, show 0 in cost columns
         if (in_array($pkg->status, [5, 6])) {
             return [
+                $pkg->id ?? '',
                 $pkg->reference_number ?? '',
                 $pkg->Customer ? $pkg->Customer->name : '',
                 $pkg->Area ? $pkg->Area->name : '',
@@ -158,6 +168,33 @@ class ThirdPartyFinancialReportExport implements FromCollection, WithHeadings, W
                 '0.00', // delivery_cost after discount = 0
                 '0.00', // discount amount = 0
                 '0.00', // net amount = 0
+                $pkg->failure_reason ? getReasonMessage($pkg->failure_reason) : '', // failure reason
+            ];
+        }
+
+        // If status is 3 (cancelled) AND package_enter_Hub is 0, delivery company didn't take the order
+        // So don't take money - set all amounts to 0
+        $isNotTakenByDelivery = ($pkg->status == 3 && ($pkg->package_enter_Hub ?? 0) == 0);
+
+        // If status is 3 and package_enter_Hub is 0, set all amounts to 0
+        if ($isNotTakenByDelivery) {
+            return [
+                $pkg->id ?? '',
+                $pkg->reference_number ?? '',
+                $pkg->Customer ? $pkg->Customer->name : '',
+                $pkg->Area ? $pkg->Area->name : '',
+                $pkg->created_at ? Carbon::parse($pkg->created_at)->format('Y-m-d') : '',
+                getPackageStatus($pkg->status, $pkg->delivery_date) ?? '---',
+                $pkg->pieces_count ?? 0,
+                '0.00', // seller_cost = 0
+                '0.00', // should receive = 0
+                '0.00', // actually received = 0
+                '0.00', // profit = 0
+                '0.00', // delivery_cost before discount = 0
+                '0.00', // delivery_cost after discount = 0
+                '0.00', // discount amount = 0
+                '0.00', // net amount = 0
+                $pkg->failure_reason ? getReasonMessage($pkg->failure_reason) : '', // failure reason
             ];
         }
 
@@ -174,7 +211,8 @@ class ThirdPartyFinancialReportExport implements FromCollection, WithHeadings, W
         }
 
         // For cancelled packages (status 3), only 25% of delivery_cost
-        if ($pkg->status == 3) {
+        // But only if package_enter_Hub is not 0 (delivery company took the order)
+        if ($pkg->status == 3 && ($pkg->package_enter_Hub ?? 0) != 0) {
             $deliveryCost = $deliveryCost * 0.25;
         }
 
@@ -189,6 +227,7 @@ class ThirdPartyFinancialReportExport implements FromCollection, WithHeadings, W
         $netAmount = $profit - $deliveryCostAfterDiscount;
 
         return [
+            $pkg->id ?? '',
             $pkg->reference_number ?? '',
             $pkg->Customer ? $pkg->Customer->name : '',
             $pkg->Area ? $pkg->Area->name : '',
@@ -203,12 +242,14 @@ class ThirdPartyFinancialReportExport implements FromCollection, WithHeadings, W
             number_format($deliveryCostAfterDiscount, 2), // delivery_cost after discount
             number_format($discountAmount, 2), // discount amount
             number_format($netAmount, 2), // net = profit - delivery_cost_after_discount
+            $pkg->failure_reason ? getReasonMessage($pkg->failure_reason) : '', // failure reason
         ];
     }
 
     public function headings(): array
     {
         return [
+            'رقم الشحنة',
             'رقم المرجع',
             'اسم العميل',
             'منطقة التوصيل',
@@ -223,6 +264,7 @@ class ThirdPartyFinancialReportExport implements FromCollection, WithHeadings, W
             'تكلفة التوصيل بعد الخصم',
             'مبلغ الخصم على التوصيل',
             'المبلغ الصافي للطرف الثالث (الربح - تكلفة التوصيل بعد الخصم)',
+            'سبب الفشل',
         ];
     }
 

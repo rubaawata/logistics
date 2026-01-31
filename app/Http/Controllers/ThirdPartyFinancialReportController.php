@@ -69,6 +69,12 @@ class ThirdPartyFinancialReportController extends Controller
                     continue; 
                 }
 
+                // If status is 3 (cancelled) AND package_enter_Hub is 0, delivery company didn't take the order
+                // So don't take money - set all amounts to 0
+                if ($package->status == 3 && ($package->package_enter_Hub ?? 0) == 0) {
+                    continue; // Skip calculation - all amounts are 0
+                }
+
                 $packageCost = $package->package_cost ?? 0; // customer_must_pay
                 $paidAmount = $package->paid_amount ?? 0; // what third party actually received
                 $sellerCost = $package->seller_cost ?? 0; // seller_must_get (what third party pays)
@@ -82,7 +88,8 @@ class ThirdPartyFinancialReportController extends Controller
                 }
 
                 // For cancelled packages (status 3), only 25% of delivery_cost
-                if ($package->status == 3) {
+                // But only if package_enter_Hub is not 0 (delivery company took the order)
+                if ($package->status == 3 && ($package->package_enter_Hub ?? 0) != 0) {
                     $deliveryCost = $deliveryCost * 0.25;
                 }
 

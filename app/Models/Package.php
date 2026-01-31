@@ -32,7 +32,8 @@ class Package extends Model
         'status',
         'number_of_attempts',
         'delivery_fee_payer',
-        'package_enter_Hub'
+        'package_enter_Hub',
+        'failure_reason'
     ];
 
     protected $casts = [
