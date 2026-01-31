@@ -4,10 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ThirdPartyPackageItem extends Model
+class PackageItem extends Model
 {
     protected $fillable = [
-        'third_party_package_id',
+        'package_id',
         'name',
         'description',
         'price',
@@ -23,7 +23,7 @@ class ThirdPartyPackageItem extends Model
 
     public function package()
     {
-        return $this->belongsTo(ThirdPartyPackage::class, 'third_party_package_id');
+        return $this->belongsTo(Package::class, 'package_id');
     }
 
     public function getTotalAttribute()

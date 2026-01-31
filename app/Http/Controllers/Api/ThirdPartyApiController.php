@@ -4,20 +4,24 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ThirdPartyPackage;
-use App\Models\ThirdPartyPackageItem;
+use App\Models\PackageItem;
 use App\Models\Area;
 use App\Models\ThirdPartyApplication;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Services\ShipmentService;
+use App\Services\ThirdPartyPackageService;
+use App\Models\Package;
 
 class ThirdPartyApiController extends Controller
 {
     protected ShipmentService $shipmentService;
-    public function __construct(ShipmentService $shipmentService)
+    protected ThirdPartyPackageService $thirdPartyPackageService;
+    public function __construct(ShipmentService $shipmentService, ThirdPartyPackageService $thirdPartyPackageService)
     {
         $this->shipmentService = $shipmentService;
+        $this->thirdPartyPackageService = $thirdPartyPackageService;
     }
 
     //--------------------------------------------------//
@@ -29,11 +33,13 @@ class ThirdPartyApiController extends Controller
             'seller_company' => 'nullable|string|max:255',
             'seller_phone' => 'nullable|string|max:255',
             'seller_email' => 'nullable|email|max:255',
+            'seller_must_get' => 'required|numeric|min:0',
 
             // Customer Information
             'customer_name' => 'required|string|max:255',
             'customer_phone' => 'required|string|max:255',
             'customer_email' => 'nullable|email|max:255',
+            'customer_must_pay' => 'required|numeric|min:0',
 
             // Shipping Information
             'area_id' => 'required|exists:areas,id',
@@ -49,6 +55,8 @@ class ThirdPartyApiController extends Controller
             'notes' => 'nullable|string',
             'open_package' => 'nullable|boolean',
             'reference_number' => 'nullable|string|max:100',
+            'delivery_fee_payer' => 'required|string|in:customer,seller',
+
 
             // Items Array
             'items' => 'required|array|min:1',
@@ -81,38 +89,40 @@ class ThirdPartyApiController extends Controller
             $area = Area::findOrFail($request->area_id);
             $deliveryCost = $area->delivery_cost ?? 0;
             //--------------------------------------------------//
-            // Calculate seller price from items (total goods value)
-            $sellerPrice = 0;
-            foreach ($request->items as $item) {
-                $sellerPrice += $item['price'] * $item['quantity'];
-            }
+            // Get customer id
+            $customerId = $this->thirdPartyPackageService->getCustomerId(
+                $request->customer_name,
+                $request->customer_phone,
+                $request->customer_email,
+                $thirdPartyApp->id,
+                $request->location_link,
+                $request->location_text
+            );
             //--------------------------------------------------//
-
-
-            // Customer will pay goods + delivery (no discount applied here)
-            $finalSellerPrice = $sellerPrice;
-            $customerPrice = $sellerPrice + $deliveryCost;
-            //--------------------------------------------------//
-            $packageIdPerThirdParty = $this->getPackageIdPerThirdParty($thirdPartyApp->id);
-            //dd($packageIdPerThirdParty);
+            // Get seller id
+            $sellerId = $this->thirdPartyPackageService->getSellerId(
+                $request->seller_name,
+                $request->seller_company,
+                $request->seller_phone,
+                $request->seller_email,
+                $thirdPartyApp->id,
+                $request->location_link,
+                $request->location_text
+            );
             //--------------------------------------------------//
             // Calculate delivery date
-            $deliveryDate = now()->addDays(1);
+            $deliveryDate = now();
             //--------------------------------------------------//
             // Create package
-            $package = ThirdPartyPackage::create([
+            $package = Package::create([
                 'third_party_application_id' => $thirdPartyApp->id,
-                'seller_name' => $request->seller_name,
-                'seller_company' => $request->seller_company,
-                'seller_phone' => $request->seller_phone,
-                'seller_email' => $request->seller_email,
-                'customer_name' => $request->customer_name,
-                'customer_phone' => $request->customer_phone,
-                'customer_email' => $request->customer_email,
+                'reference_number' => $request->reference_number ?? null,
+                'seller_cost' => $request->seller_must_get,
+                'seller_id' => $sellerId,
+                'customer_id' => $customerId,
                 'area_id' => $request->area_id,
                 'delivery_cost' => $deliveryCost,
-                'seller_price' => $finalSellerPrice,
-                'customer_price' => $customerPrice,
+                'package_cost' => $request->customer_must_pay,
                 'delivery_date' => $deliveryDate,
                 'delivery_date_1' => $deliveryDate,
                 'location_link' => $request->location_link,
@@ -124,18 +134,16 @@ class ThirdPartyApiController extends Controller
                 'notes' => $request->notes,
                 'open_package' => $request->open_package ?? false,
                 'pieces_count' => array_sum(array_column($request->items, 'quantity')),
-                'status' => 'pending',
+                'status' => '6',
                 'number_of_attempts' => 0,
-                'delivery_fee_payer' => 'customer',
-                'reference_number' => $request->reference_number ?? null,
-                'id_per_user' => $packageIdPerThirdParty,
+                'delivery_fee_payer' => $request->delivery_fee_payer,
             ]);
             //--------------------------------------------------//
             // Create items
             $sortOrder = 0;
             foreach ($request->items as $item) {
-                ThirdPartyPackageItem::create([
-                    'third_party_package_id' => $package->id,
+                PackageItem::create([
+                    'package_id' => $package->id,
                     'name' => $item['name'],
                     'description' => $item['description'] ?? null,
                     'price' => $item['price'],
@@ -150,15 +158,14 @@ class ThirdPartyApiController extends Controller
                 'success' => true,
                 'message' => 'Package created successfully',
                 'data' => [
-                    'package_id' => $package->id_per_user,
-                    'seller_price' => $package->seller_price,
-                    'customer_price' => $package->customer_price,
+                    'package_id' => $package->id,
+                    'seller_price' => $package->seller_cost,
+                    'customer_price' => $package->package_cost,
                     'delivery_cost' => $package->delivery_cost,
                     'items_count' => count($request->items),
                     'total_pieces' => $package->pieces_count,
-                    'status' => $this->getStatusesText($package->status),
+                    'status' => getPackageStatusEN($package->status),
                     'reference_number' => $package->reference_number,
-                    //'delivery_date' => $package->delivery_date,
                 ]
             ], 201);
             //--------------------------------------------------//
@@ -167,7 +174,7 @@ class ThirdPartyApiController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create package',
-                //'error' => $e->getMessage()
+                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -618,12 +625,5 @@ class ThirdPartyApiController extends Controller
             ->max('id_per_user');
 
         return $lastPackageId ? $lastPackageId + 1 : 1;
-    }
-
-    //--------------------------------------------------//
-    private function gatAreaName($area_id)
-    {
-        $area = Area::find($area_id);
-        return $area ? $area->name : 'Unknown';
     }
 }

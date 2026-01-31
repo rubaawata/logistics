@@ -13,6 +13,20 @@ if (!function_exists('getPackageStatus')) {
     }
 }
 
+if (!function_exists('getPackageStatusEn')) {
+    function getPackageStatusEN($status, $delivery_date = null)
+    {
+        $status = (int) $status;
+        $statuses = config('constants.PACKAGE_STATUS_EN');
+        $statusName = $statuses[$status] ?? 'غير معروف';
+        $today = today()->toDateString();
+        if ($delivery_date && $status === 5 && $delivery_date != $today) {
+            return 'Delayed';
+        }
+        return $statusName;
+    }
+}
+
 if (!function_exists('getReasonMessage')) {
     function getReasonMessage($reason)
     {
