@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Package extends Model
 {
-    public $timestamps = false;
     protected $fillable = [
         'third_party_application_id',
         'reference_number',
