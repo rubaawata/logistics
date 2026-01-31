@@ -19,6 +19,7 @@ class Package extends Model
         'package_cost',
         'delivery_date',
         'delivery_date_1',
+        'receipt_date',
         'location_link',
         'location_text',
         'building_number',
@@ -55,6 +56,10 @@ class Package extends Model
         return $this->belongsTo(Area::class, 'area_id', 'id');
     }
 
+    public function ThirdPartyApplication()
+    {
+        return $this->belongsTo(ThirdPartyApplication::class, 'third_party_application_id', 'id');
+    }
     public function items()
     {
         return $this->hasMany(PackageItem::class, 'package_id')->orderBy('sort_order');

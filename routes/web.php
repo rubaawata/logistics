@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Website\DeliveriesLoginController;
 use App\Http\Controllers\Website\DeliveryDashboardController;
+use App\Http\Controllers\ThirdPartyFinancialReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -39,6 +40,10 @@ Route::get('/clear/cache', function () {
 //TODO
 Route::get('admin/export-delivery-report/{id}', [DeliveryDashboardController::class, 'report']);
 Route::get('admin/export-seller-report/{id}', [DeliveryDashboardController::class, 'seller']);
+
+// Third Party Financial Report
+Route::get('/admin/third-party-financial-report', [ThirdPartyFinancialReportController::class, 'index'])->name('third-party-financial-report.index');
+Route::post('/admin/third-party-financial-report/export', [ThirdPartyFinancialReportController::class, 'export'])->name('third-party-financial-report.export');
 
 
 
