@@ -32,6 +32,7 @@ class Package extends Model
         'status',
         'number_of_attempts',
         'delivery_fee_payer',
+        'package_enter_Hub'
     ];
     
     public function Seller()
@@ -58,5 +59,9 @@ class Package extends Model
     public function ThirdPartyApplication()
     {
         return $this->belongsTo(ThirdPartyApplication::class, 'third_party_application_id', 'id');
+    }
+    public function items()
+    {
+        return $this->hasMany(PackageItem::class, 'package_id')->orderBy('sort_order');
     }
 }
