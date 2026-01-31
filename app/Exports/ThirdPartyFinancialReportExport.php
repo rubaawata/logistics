@@ -38,12 +38,27 @@ class ThirdPartyFinancialReportExport implements FromCollection, WithHeadings, W
             ->whereNotNull('third_party_application_id');
             // Show all packages, but calculate only for status NOT 5 and NOT 6
 
-        // Filter by created_at date
-        if ($this->dateFrom) {
-            $query->whereDate('created_at', '>=', Carbon::parse($this->dateFrom)->format('Y-m-d'));
-        }
-        if ($this->dateTo) {
-            $query->whereDate('created_at', '<=', Carbon::parse($this->dateTo)->format('Y-m-d'));
+        // Filter by created_at OR delivery_date
+        if ($this->dateFrom || $this->dateTo) {
+            $query->where(function($q) {
+                // Filter by created_at
+                $q->where(function($subQ) {
+                    if ($this->dateFrom) {
+                        $subQ->whereDate('created_at', '>=', Carbon::parse($this->dateFrom)->format('Y-m-d'));
+                    }
+                    if ($this->dateTo) {
+                        $subQ->whereDate('created_at', '<=', Carbon::parse($this->dateTo)->format('Y-m-d'));
+                    }
+                })->orWhere(function($subQ) {
+                    // Filter by delivery_date
+                    if ($this->dateFrom) {
+                        $subQ->whereDate('delivery_date', '>=', Carbon::parse($this->dateFrom)->format('Y-m-d'));
+                    }
+                    if ($this->dateTo) {
+                        $subQ->whereDate('delivery_date', '<=', Carbon::parse($this->dateTo)->format('Y-m-d'));
+                    }
+                });
+            });
         }
 
         $packages = $query->with(['ThirdPartyApplication', 'Customer', 'Area'])
@@ -295,7 +310,7 @@ class ThirdPartyFinancialReportExport implements FromCollection, WithHeadings, W
                 $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 
                 if ($this->dateFrom || $this->dateTo) {
-                    $dateRange = 'تاريخ الإنشاء: ';
+                    $dateRange = 'تاريخ (الإنشاء أو التوصيل): ';
                     if ($this->dateFrom && $this->dateTo) {
                         $dateRange .= 'من ' . Carbon::parse($this->dateFrom)->format('Y-m-d') . ' إلى ' . Carbon::parse($this->dateTo)->format('Y-m-d');
                     } elseif ($this->dateFrom) {

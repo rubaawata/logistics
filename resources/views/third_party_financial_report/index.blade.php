@@ -77,7 +77,7 @@
                         </div>
                         <div class="col-lg-3">
                             <div class="form-group">
-                                <label class="control-label">من تاريخ الإنشاء</label>
+                                <label class="control-label">من تاريخ (الإنشاء أو التوصيل)</label>
                                 <div class="input-group">
                                     <input type="date" name="date_from" class="form-control" value="{{$dateFrom}}" required>
                                 </div>
@@ -85,7 +85,7 @@
                         </div>
                         <div class="col-lg-3">
                             <div class="form-group">
-                                <label class="control-label">إلى تاريخ الإنشاء</label>
+                                <label class="control-label">إلى تاريخ (الإنشاء أو التوصيل)</label>
                                 <div class="input-group">
                                     <input type="date" name="date_to" class="form-control" value="{{$dateTo}}" required>
                                 </div>
@@ -290,6 +290,7 @@
                             </tbody>
                             <tfoot>
                                 <tr style="font-weight: bold; background-color: #f5f5f5;">
+                                    <td></td>
                                     <td colspan="6" style="text-align: left;">المجموع الكلي</td>
                                     <td>{{number_format($summary['total_seller_cost'], 2)}} </td>
                                     <td>{{number_format($summary['total_should_receive'], 2)}} </td>

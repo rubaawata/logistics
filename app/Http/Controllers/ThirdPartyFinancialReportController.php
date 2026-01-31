@@ -38,12 +38,27 @@ class ThirdPartyFinancialReportController extends Controller
                 ->whereNotNull('third_party_application_id');
                 // Show all packages, but calculate only for status NOT 5 and NOT 6
 
-            // Filter by created_at date
-            if ($dateFrom) {
-                $query->whereDate('created_at', '>=', Carbon::parse($dateFrom)->format('Y-m-d'));
-            }
-            if ($dateTo) {
-                $query->whereDate('created_at', '<=', Carbon::parse($dateTo)->format('Y-m-d'));
+            // Filter by created_at OR delivery_date
+            if ($dateFrom || $dateTo) {
+                $query->where(function($q) use ($dateFrom, $dateTo) {
+                    // Filter by created_at
+                    $q->where(function($subQ) use ($dateFrom, $dateTo) {
+                        if ($dateFrom) {
+                            $subQ->whereDate('created_at', '>=', Carbon::parse($dateFrom)->format('Y-m-d'));
+                        }
+                        if ($dateTo) {
+                            $subQ->whereDate('created_at', '<=', Carbon::parse($dateTo)->format('Y-m-d'));
+                        }
+                    })->orWhere(function($subQ) use ($dateFrom, $dateTo) {
+                        // Filter by delivery_date
+                        if ($dateFrom) {
+                            $subQ->whereDate('delivery_date', '>=', Carbon::parse($dateFrom)->format('Y-m-d'));
+                        }
+                        if ($dateTo) {
+                            $subQ->whereDate('delivery_date', '<=', Carbon::parse($dateTo)->format('Y-m-d'));
+                        }
+                    });
+                });
             }
 
             $packages = $query->with(['ThirdPartyApplication', 'Customer', 'Area'])
