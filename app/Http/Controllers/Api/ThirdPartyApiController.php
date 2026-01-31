@@ -537,8 +537,8 @@ class ThirdPartyApiController extends Controller
             }
             //--------------------------------------------------//
             // Find the package
-            $package = ThirdPartyPackage::where('third_party_application_id', $thirdPartyApp->id)
-                ->where('id_per_user', $id)
+            $package = Package::where('third_party_application_id', $thirdPartyApp->id)
+                ->where('id', $id)
                 ->first();
 
             if (!$package) {
@@ -549,21 +549,23 @@ class ThirdPartyApiController extends Controller
             }
             //--------------------------------------------------//
             // Check if package is cancelled or delivered
-            if (in_array($package->status, ['cancelled', 'delivered'])) {
+            if (in_array($package->status, [3, 1])) { // cancelled or delivered
                 return response()->json([
                     'success' => false,
-                    'message' => 'Package cannot be updated because it is already ' . $this->getStatusesText($package->status),
+                    'message' => 'Package cannot be updated because it is already ' . getPackageStatusEN($package->status),
                 ], 400);
             }
             //--------------------------------------------------//
             // Validate input
             $validator = Validator::make($request->all(), [
-                'seller_name'     => 'required|string|max:255',
+                'seller_name'     => 'nullable|string|max:255',
                 'seller_company'  => 'nullable|string|max:255',
                 'seller_phone'    => 'nullable|string|max:255',
                 'seller_email'    => 'nullable|email|max:255',
-                'customer_name'   => 'required|string|max:255',
-                'customer_phone'  => 'required|string|max:255',
+                'seller_location_link' => 'nullable|string|max:255',
+                'seller_location_text' => 'nullable|string',
+                'customer_name'   => 'nullable|string|max:255',
+                'customer_phone'  => 'nullable|string|max:255',
                 'customer_email'  => 'nullable|email|max:255',
                 'location_link'   => 'nullable|string|max:255',
                 'location_text'   => 'nullable|string',
@@ -582,15 +584,38 @@ class ThirdPartyApiController extends Controller
             //--------------------------------------------------//
             // Update package fields
             $updateData = $validator->validated();
-            $package->update($updateData);
-            //--------------------------------------------------//
-            // Call shipment service if main_package_id exists
-            if ($package->main_package_id) {
-                $this->shipmentService->updatePackage(
-                    $package->main_package_id,
-                    $updateData
-                );
+            $this->thirdPartyPackageService->updateSellerPartial(
+                $package->seller_id,
+                $updateData['seller_name'],
+                $updateData['seller_company'],
+                $updateData['seller_phone'],
+                $updateData['seller_email'],
+                $updateData['seller_location_link'],
+                $updateData['seller_location_text']
+            );
+            $this->thirdPartyPackageService->updateCustomerPartial(
+                $package->customer_id,
+                $updateData['customer_name'],
+                $updateData['customer_phone'],
+                $updateData['customer_email'],
+                $updateData['location_link'],
+                $updateData['location_text']
+            );
+
+            // Only update fields that are not null
+            $data = array_filter([
+                'location_link' => $updateData['location_link'],
+                'location_text' => $updateData['location_text'],
+                'building_number' => $updateData['building_number'],
+                'floor_number' => $updateData['floor_number'],
+                'apartment_number' => $updateData['apartment_number'],
+            ], fn($value) => !is_null($value));
+
+            if (!empty($data)) {
+                $package->update($data);
             }
+
+            $package->save();
             //--------------------------------------------------//
             DB::commit();
             //--------------------------------------------------//
@@ -598,8 +623,8 @@ class ThirdPartyApiController extends Controller
                 'success' => true,
                 'message' => 'Package updated successfully',
                 'data' => [
-                    'package_id' => $package->id_per_user,
-                    'status'     => $this->getStatusesText($package->status),
+                    'package_id' => $package->id,
+                    'status'     => getPackageStatusEN($package->status)
                 ]
             ]);
             //--------------------------------------------------//
@@ -614,7 +639,7 @@ class ThirdPartyApiController extends Controller
     }
 
     //--------------------------------------------------//
-    private function getStatusesText($status)
+    /*private function getStatusesText($status)
     {
         switch ($status) {
             case 'pending':
@@ -660,5 +685,5 @@ class ThirdPartyApiController extends Controller
             ->max('id_per_user');
 
         return $lastPackageId ? $lastPackageId + 1 : 1;
-    }
+    }*/
 }
