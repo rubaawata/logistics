@@ -396,7 +396,7 @@ class ThirdPartyApiController extends Controller
     //--------------------------------------------------//
     public function getAreas()
     {
-        $areas = Area::select('id', 'name')->get();
+        $areas = Area::select('id', 'name', 'delivery_cost')->get();
         //--------------------------------------------------//
         return response()->json([
             'success' => true,
