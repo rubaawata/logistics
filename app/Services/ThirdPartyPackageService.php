@@ -4,6 +4,10 @@ namespace App\Services;
 
 use App\Models\Customer;
 use App\Models\Seller;
+use App\Models\Package;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use App\Models\ThirdPartyApplication;
 
 class ThirdPartyPackageService
 {
@@ -148,6 +152,56 @@ class ThirdPartyPackageService
             return $seller->id;
         } catch (\Exception $e) {
             return null;
+        }
+    }
+
+    public function sendNotificationToThirdParty(int $packageId, string $action): bool
+    {
+        try {
+            $package = Package::find($packageId);
+            if (!$package) {
+                Log::warning('Package not found', ['package_id' => $packageId]);
+                return false;
+            }
+
+            $thirdParty = ThirdPartyApplication::find($package->third_party_application_id);
+            if (!$thirdParty || !$thirdParty->webhook_url) {
+                Log::warning('Third party or webhook URL missing', [
+                    'package_id' => $packageId,
+                    'third_party_application_id' => $package->third_party_application_id,
+                ]);
+                return false;
+            }
+
+            $payload = [
+                'action'            => $action,
+                'package_id'        => $package->id,
+                'delivery_date'     => $package->delivery_date,
+                'reference_number'  => $package->reference_number,
+                'current_status'    => getPackageStatusEN($package->status),
+                'failure_reason'    => getReasonMessageEN($package->failure_reason),
+            ];
+
+            $response = Http::timeout(5)
+                ->retry(2, 100)
+                ->asJson()
+                ->post($thirdParty->webhook_url, $payload);
+
+            Log::info('Webhook sent', [
+                'url'        => $thirdParty->webhook_url,
+                'status'     => $response->status(),
+                'response'   => $response->body(),
+                'payload'    => $payload,
+            ]);
+
+            return $response->successful();
+        } catch (\Throwable $e) {
+            Log::error('Error sending webhook', [
+                'package_id' => $packageId,
+                'exception'  => $e->getMessage(),
+            ]);
+
+            return false;
         }
     }
 }

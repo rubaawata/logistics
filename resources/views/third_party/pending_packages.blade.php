@@ -215,7 +215,7 @@
                     _token: '{{ csrf_token() }}'
                 },
                 success: function(response) {
-                    document.getElementById('responseMessageStatus').innerHTML = "تم تأكيد البامج بنجاح";
+                    document.getElementById('responseMessageStatus').innerHTML = "تم تأكيد الشحنة بنجاح";
                     hideSpinner();
                     setTimeout(function() {
                         location.reload(); // reloads the current page

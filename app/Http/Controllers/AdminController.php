@@ -511,15 +511,9 @@ class AdminController extends CBController
     {
         $package_id = $request->package_id;
         $delivery_date = $request->delivery_date;
-
-        $delivery_date = new Carbon($delivery_date);
         try {
-            Package::where('id', $package_id)
-                ->update([
-                    'delivery_date' => $delivery_date,
-                    'delivery_date_1' => $delivery_date,
-                    'status' => 5
-                ]);
+            $delivery_date = Carbon::createFromFormat('d/m/Y', $delivery_date);
+            $this->shipmentService->markAsPending($package_id, $delivery_date->toDateString());
             return response()->json([
                 'success' => true
             ], 200);
@@ -530,5 +524,14 @@ class AdminController extends CBController
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function test(Request $request)
+    {
+        \Log::info('Test function called');
+        \Log::info(json_encode($request->all()));
+        return response()->json([
+            'success' => true
+        ], 200);
     }
 }
