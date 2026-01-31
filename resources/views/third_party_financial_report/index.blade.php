@@ -77,17 +77,18 @@
                         </div>
                         <div class="col-lg-3">
                             <div class="form-group">
-                                <label class="control-label">من تاريخ (الإنشاء أو التوصيل)</label>
+                                <label class="control-label">من تاريخ التوصيل</label>
                                 <div class="input-group">
-                                    <input type="date" name="date_from" class="form-control" value="{{$dateFrom}}" required>
+                                    <input type="date" name="date_from" class="form-control" value="{{$dateFrom}}">
                                 </div>
+                                <small class="text-muted">سيتم عرض جميع الشحنات التي تاريخ التوصيل فيها فارغ</small>
                             </div>
                         </div>
                         <div class="col-lg-3">
                             <div class="form-group">
-                                <label class="control-label">إلى تاريخ (الإنشاء أو التوصيل)</label>
+                                <label class="control-label">إلى تاريخ التوصيل</label>
                                 <div class="input-group">
-                                    <input type="date" name="date_to" class="form-control" value="{{$dateTo}}" required>
+                                    <input type="date" name="date_to" class="form-control" value="{{$dateTo}}">
                                 </div>
                             </div>
                         </div>
