@@ -164,6 +164,8 @@ class ThirdPartyApiController extends Controller
                     'total_pieces' => $package->pieces_count,
                     'status' => getPackageStatusEN($package->status),
                     'reference_number' => $package->reference_number,
+                    'created_at' => $package->created_at,
+                    'updated_at' => $package->updated_at,
                 ]
             ], 201);
             //--------------------------------------------------//
@@ -215,6 +217,8 @@ class ThirdPartyApiController extends Controller
                     'failure_reason' => getReasonMessageEN($package->failure_reason),
                     'reference_number' => $package->reference_number,
                     'delivery_date' => $package->delivery_date,
+                    'created_at' => $package->created_at,
+                    'updated_at' => $package->updated_at,
                     // Seller Info
                     'seller_name' => $package->Seller->seller_name ?? null,
                     'seller_company' => $package->Seller->company_name ?? null,
@@ -292,10 +296,10 @@ class ThirdPartyApiController extends Controller
             //--------------------------------------------------//
             // Filter by date range
             if ($request->filled('date_from')) {
-                $query->where('delivery_date', '>=', $request->date_from);
+                $query->where('created_at', '>=', $request->date_from);
             }
             if ($request->filled('date_to')) {
-                $query->where('delivery_date', '<=', $request->date_to);
+                $query->where('created_at', '<=', $request->date_to);
             }
 
             //--------------------------------------------------//
@@ -315,6 +319,8 @@ class ThirdPartyApiController extends Controller
                     'failure_reason' => getReasonMessageEN($package->failure_reason),
                     'reference_number' => $package->reference_number,
                     'delivery_date' => $package->delivery_date,
+                    'created_at' => $package->created_at,
+                    'updated_at' => $package->updated_at,
                     'open_package' => (bool) $package->open_package,
                     // Seller Info
                     'seller_name' => $package->Seller->seller_name ?? null,
