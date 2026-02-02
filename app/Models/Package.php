@@ -36,6 +36,7 @@ class Package extends Model
         'failure_reason',
         'shipments_company_name',
         'cost_of_shipments',
+        'is_testing',
     ];
 
     protected $casts = [
@@ -44,6 +45,15 @@ class Package extends Model
         'package_cost' => 'decimal:2',
         'seller_cost' => 'decimal:2',
     ];
+
+    protected static function booted()
+    {
+        static::addGlobalScope('exclude_testing_third_party', function (Builder $builder) {
+            $builder->where(function ($query) {
+                $query->where('is_testing', false);
+            });
+        });
+    }
     
     public function Seller()
     {

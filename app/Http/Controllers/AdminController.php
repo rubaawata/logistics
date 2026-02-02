@@ -438,14 +438,12 @@ class AdminController extends CBController
         foreach ($deliveriesData as $item) {
 
             // Count all packages within week range
-            $total_packages = DB::table('packages')
-                ->whereBetween('delivery_date', [$weekStart, $weekEnd])
+            $total_packages = Package::whereBetween('delivery_date', [$weekStart, $weekEnd])
                 ->where('delivery_id', $item->id)
                 ->count();
 
             // Delivered packages (status 1)
-            $total_delivered_packages = DB::table('packages')
-                ->whereBetween('delivery_date', [$weekStart, $weekEnd])
+            $total_delivered_packages = Package::whereBetween('delivery_date', [$weekStart, $weekEnd])
                 ->where('delivery_id', $item->id)
                 ->where('status', '1')
                 ->count();
@@ -453,8 +451,7 @@ class AdminController extends CBController
             // Not delivered = total - delivered
             $total_none_delivered_packages = $total_packages - $total_delivered_packages;
 
-            $total_amount = DB::table('packages')
-                                ->whereBetween('delivery_date', [$weekStart, $weekEnd])
+            $total_amount = Package::whereBetween('delivery_date', [$weekStart, $weekEnd])
                                 ->where('delivery_id', $item->id)
                                 ->where('paid_amount', '>', 0)
                                 ->sum('delivery_cost');

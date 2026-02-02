@@ -335,7 +335,7 @@ class AdminPackagesController extends CBController
     public function hook_query_index(&$query)
     {
         //Your code here
-
+        $query->where('is_testing', false);
     }
 
     /*

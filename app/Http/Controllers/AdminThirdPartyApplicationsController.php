@@ -64,6 +64,7 @@ class AdminThirdPartyApplicationsController extends CBController
         $this->form[] = ['label' => 'الخصم (%)', 'name' => 'discount', 'type' => 'number', 'validation' => 'nullable|numeric|min:0|max:100', 'width' => 'col-sm-10', 'placeholder' => '0-100', 'help' => 'نسبة الخصم من 0 إلى 100', 'default' => 0];
         $this->form[] = ['label' => 'نسبة تحمل الإلغاء (%)', 'name' => 'cancellation_fee_percentage', 'type' => 'number', 'validation' => 'nullable|numeric|min:0|max:100', 'width' => 'col-sm-10', 'placeholder' => '0-100', 'help' => 'نسبة من تكلفة التوصيل التي يدفعها الطرف الثالث عند إلغاء الطلب (0-100). القيمة الافتراضية: 25%', 'default' => 25];
         $this->form[] = ['label' => 'نشط', 'name' => 'is_active', 'type' => 'switch', 'validation' => 'required', 'width' => 'col-sm-10'];
+        $this->form[] = ['label' => 'إختبار', 'name' => 'is_testing', 'type' => 'switch', 'validation' => 'required', 'width' => 'col-sm-10'];
         # END FORM DO NOT REMOVE THIS LINE
 
         # OLD START FORM

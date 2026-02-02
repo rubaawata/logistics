@@ -139,6 +139,7 @@ class ThirdPartyApiController extends Controller
                 'delivery_fee_payer' => $request->delivery_fee_payer,
                 'package_enter_Hub' => false,
                 'shipments_company_name' => $request->shipments_company_name ?? null,
+                'is_testing' => $thirdPartyApp->is_testing,
             ]);
             //--------------------------------------------------//
             // Create items
@@ -202,6 +203,7 @@ class ThirdPartyApiController extends Controller
             $packageId = $this->thirdPartyPackageService->decryptId($id);
             $package = Package::with(['Seller', 'Customer', 'Area', 'items'])
                 ->where('third_party_application_id', $thirdPartyApp->id)
+                ->withoutGlobalScope('exclude_testing_third_party')
                 ->where('id', $packageId)
                 ->first();
 
@@ -290,6 +292,7 @@ class ThirdPartyApiController extends Controller
             //--------------------------------------------------//
             // Base query with relationships
             $query = Package::with(['Seller', 'Customer', 'Area', 'items'])
+                ->withoutGlobalScope('exclude_testing_third_party')
                 ->where('third_party_application_id', $thirdPartyApp->id);
 
             //--------------------------------------------------//
@@ -500,7 +503,7 @@ class ThirdPartyApiController extends Controller
             //--------------------------------------------------//
             // Find the package
             $packageId = $this->thirdPartyPackageService->decryptId($id);
-            $package = Package::where('third_party_application_id', $thirdPartyApp->id)->where('id', $packageId)->first();
+            $package = Package::withoutGlobalScope('exclude_testing_third_party')->where('third_party_application_id', $thirdPartyApp->id)->where('id', $packageId)->first();
             if (!$package) {
                 return response()->json([
                     'success' => false,
@@ -562,6 +565,7 @@ class ThirdPartyApiController extends Controller
             // Find the package
             $packageId = $this->thirdPartyPackageService->decryptId($id);
             $package = Package::where('third_party_application_id', $thirdPartyApp->id)
+                ->withoutGlobalScope('exclude_testing_third_party')
                 ->where('id', $packageId)
                 ->first();
 
