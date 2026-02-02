@@ -59,6 +59,9 @@ class ThirdPartyApiController extends Controller
             'reference_number' => 'nullable|string|max:100',
             'delivery_fee_payer' => 'required|string|in:customer,seller',
 
+            // Shipments Information
+            'shipments_company_name' => 'nullable|string|max:255',
+
 
             // Items Array
             'items' => 'required|array|min:1',
@@ -135,6 +138,7 @@ class ThirdPartyApiController extends Controller
                 'number_of_attempts' => 0,
                 'delivery_fee_payer' => $request->delivery_fee_payer,
                 'package_enter_Hub' => false,
+                'shipments_company_name' => $request->shipments_company_name ?? null,
             ]);
             //--------------------------------------------------//
             // Create items
@@ -152,11 +156,12 @@ class ThirdPartyApiController extends Controller
             //--------------------------------------------------//
             DB::commit();
             //--------------------------------------------------//
+            $packageId = $this->thirdPartyPackageService->encryptId($package->id);
             return response()->json([
                 'success' => true,
                 'message' => 'Package created successfully',
                 'data' => [
-                    'package_id' => $package->id,
+                    'package_id' => $packageId,
                     'seller_price' => $package->seller_cost,
                     'customer_price' => $package->package_cost,
                     'delivery_cost' => $package->delivery_cost,
@@ -183,6 +188,7 @@ class ThirdPartyApiController extends Controller
     public function getPackage(Request $request, $id)
     {
         try {
+
             $thirdPartyApp = $request->get('third_party_app');
             if (!$thirdPartyApp) {
                 return response()->json([
@@ -193,9 +199,10 @@ class ThirdPartyApiController extends Controller
 
             //--------------------------------------------------//
             // Load package with related seller, customer, area, and items
+            $packageId = $this->thirdPartyPackageService->decryptId($id);
             $package = Package::with(['Seller', 'Customer', 'Area', 'items'])
                 ->where('third_party_application_id', $thirdPartyApp->id)
-                ->where('id', $id)
+                ->where('id', $packageId)
                 ->first();
 
             if (!$package) {
@@ -206,14 +213,16 @@ class ThirdPartyApiController extends Controller
             }
 
             //--------------------------------------------------//
+            $packageId = $this->thirdPartyPackageService->encryptId($package->id);
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'package_id' => $package->id,
+                    'package_id' => $packageId,
                     'seller_must_get' => $package->seller_cost,
                     'customer_must_pay' => $package->package_cost,
                     'delivery_cost' => $package->delivery_cost,
                     'status' => getPackageStatusEN($package->status),
+                    'status_code' => $package->status,
                     'failure_reason' => getReasonMessageEN($package->failure_reason),
                     'reference_number' => $package->reference_number,
                     'delivery_date' => $package->delivery_date,
@@ -241,6 +250,8 @@ class ThirdPartyApiController extends Controller
                     'description' => $package->description,
                     'notes' => $package->notes,
                     'open_package' => (bool) $package->open_package,
+                    'shipments_company_name' => $package->shipments_company_name,
+                    'cost_of_shipments' => $package->cost_of_shipments,
                     // Items
                     'items' => $package->items->map(function ($item) {
                         return [
@@ -310,12 +321,14 @@ class ThirdPartyApiController extends Controller
             //--------------------------------------------------//
             // Map packages
             $mappedPackages = $packages->getCollection()->map(function ($package) {
+                $packageId = $this->thirdPartyPackageService->encryptId($package->id);
                 return [
-                    'package_id' => $package->id,
+                    'package_id' => $packageId,
                     'seller_must_get' => $package->seller_cost,
                     'customer_must_pay' => $package->package_cost,
                     'delivery_cost' => $package->delivery_cost,
                     'status' => getPackageStatusEN($package->status),
+                    'status_code' => $package->status,
                     'failure_reason' => getReasonMessageEN($package->failure_reason),
                     'reference_number' => $package->reference_number,
                     'delivery_date' => $package->delivery_date,
@@ -343,6 +356,8 @@ class ThirdPartyApiController extends Controller
                     'apartment_number' => $package->apartment_number,
                     'description' => $package->description,
                     'notes' => $package->notes,
+                    'shipments_company_name' => $package->shipments_company_name,
+                    'cost_of_shipments' => $package->cost_of_shipments,
                     // Items
                     'items' => $package->items->map(function ($item) {
                         return [
@@ -402,7 +417,7 @@ class ThirdPartyApiController extends Controller
     //--------------------------------------------------//
     public function getAreas()
     {
-        $areas = Area::select('id', 'name', 'delivery_cost')->get();
+        $areas = Area::select('id', 'name', 'delivery_cost')->where('show_to_third_party', true)->get();
         //--------------------------------------------------//
         return response()->json([
             'success' => true,
@@ -484,7 +499,8 @@ class ThirdPartyApiController extends Controller
             }
             //--------------------------------------------------//
             // Find the package
-            $package = Package::where('third_party_application_id', $thirdPartyApp->id)->where('id', $id)->first();
+            $packageId = $this->thirdPartyPackageService->decryptId($id);
+            $package = Package::where('third_party_application_id', $thirdPartyApp->id)->where('id', $packageId)->first();
             if (!$package) {
                 return response()->json([
                     'success' => false,
@@ -507,11 +523,12 @@ class ThirdPartyApiController extends Controller
             //--------------------------------------------------//
             DB::commit();
             //--------------------------------------------------//
+            $packageId = $this->thirdPartyPackageService->encryptId($package->id);
             return response()->json([
                 'success' => true,
                 'message' => 'Package cancelled successfully',
                 'data'    => [
-                    'package_id' => $package->id,
+                    'package_id' => $packageId,
                     'status'     => getPackageStatusEN($package->status),
                     'failure_reason' => getReasonMessageEN($package->failure_reason),
                 ]
@@ -543,8 +560,9 @@ class ThirdPartyApiController extends Controller
             }
             //--------------------------------------------------//
             // Find the package
+            $packageId = $this->thirdPartyPackageService->decryptId($id);
             $package = Package::where('third_party_application_id', $thirdPartyApp->id)
-                ->where('id', $id)
+                ->where('id', $packageId)
                 ->first();
 
             if (!$package) {
@@ -625,11 +643,12 @@ class ThirdPartyApiController extends Controller
             //--------------------------------------------------//
             DB::commit();
             //--------------------------------------------------//
+            $packageId = $this->thirdPartyPackageService->encryptId($package->id);
             return response()->json([
                 'success' => true,
                 'message' => 'Package updated successfully',
                 'data' => [
-                    'package_id' => $package->id,
+                    'package_id' => $packageId,
                     'status'     => getPackageStatusEN($package->status)
                 ]
             ]);

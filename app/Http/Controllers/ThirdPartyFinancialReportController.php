@@ -72,13 +72,14 @@ class ThirdPartyFinancialReportController extends Controller
             $totalSellerCost = 0; // What third party pays to sellers
             $totalDeliveryCostBeforeDiscount = 0;
             $totalDeliveryCostAfterDiscount = 0;
+            $totalShipmentsCost = 0;
 
             foreach ($packages as $package) {
+                $totalShipmentsCost += $package->cost_of_shipments ?? 0;
                 // Only calculate costs for packages that are NOT status 5 and NOT 6
                 if (in_array($package->status, [5, 6])) {
                     continue; 
                 }
-
                 // If status is 3 (cancelled) AND package_enter_Hub is 0, delivery company didn't take the order
                 // So don't take money - set all amounts to 0
                 if ($package->status == 3 && ($package->package_enter_Hub ?? 0) == 0) {
@@ -130,6 +131,7 @@ class ThirdPartyFinancialReportController extends Controller
             $summary['discount_percentage'] = $discount;
             $summary['discount_amount'] = $totalDeliveryCostBeforeDiscount - $totalDeliveryCostAfterDiscount;
             $summary['net_amount'] = $netAmount; // profit - delivery_cost_after_discount
+            $summary['total_shipments_cost'] = $totalShipmentsCost;
             $summary['packages_count'] = $packages->count();
         }
 

@@ -193,6 +193,8 @@
                             <th>سعر الشحنة</th>
                             <th>كلفة الشحن</th>
                             <th>جهة تحمّل تكلفة التوصيل</th>
+                            <th>توصيل لشركة شحن</th>
+                            <th>تكلفة الشحن</th>
                             <th>العمليات</th>
                         </tr>
                     </thead>
@@ -237,12 +239,15 @@
                                 <td>{{$item['package_cost']}}</td>
                                 <td>{{$item['delivery_cost']}}</td>
                                 <td>{{getDeliveryFeePayer($item['delivery_fee_payer'], $item['status'], $item['failure_reason']) ?? '---'}}</td>
+                                <td>{{$item['shipments_company_name'] ?? '---'}}</td>
+                                <td>{{$item['cost_of_shipments'] ?? '---'}}</td>
                                 <td>
                                     <button class="btn btn-xs btn-success btn-edit" onclick="updatePackageStatusModal({{$item['id']}}, '{{$item['status']}}')">تعديل الحالة</button>
                                     <button class="btn btn-xs btn-warning btn-edit" onclick="updatePackageDeliveryInfoModal({{$item['id']}}, '{{$item['location_text']}}', '{{$item['location_link']}}', '{{$item['delivery_date']}}', '{{$item['paid_amount']}}')">تعديل الشحنة</button>
                                     <button class="btn btn-xs btn-primary btn-edit" onclick="updatePackageDeliveryModal({{$item['id']}}, '{{$item['delivery_id']}}')">تعديل المندوب</button>
                                     <a class="btn btn-xs btn-success btn-edit" href="admin/packages/bill-of-lading/{{$item['id']}}" target="_blank">البوليصة</a>
                                     <button class="btn btn-xs btn-primary btn-edit" onclick="redirectToWhatsApp('{{$item['customer']['phone_number']}}')">واتساب</button>
+                                    <button class="btn btn-xs btn-primary btn-edit" onclick="updatePackageShipmentsModal({{$item['id']}}, '{{$item['shipments_company_name']}}', '{{$item['cost_of_shipments']}}')">اضافة أجور لشركة الشحن</button>
                                 </td>
                             </tr>
                         @endforeach
@@ -381,6 +386,35 @@
             <div class="modal-footer">
                 <button type="submit" class="btn btn-primary" onclick="updatePackageDeliveryInfo()">تعديل</button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="closeModal('deliveryInfoModal')">إلغاء</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="shipmentsModal" tabindex="-1" aria-labelledby="shipmentsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="statusModalLabel">اضافة أجور لشركة الشحن</h5>
+            </div>
+
+            <div class="modal-body">
+                <input type="hidden" name="package_id_shipments" id="package_id_shipments">
+                <div class="mb-3">
+                    <label for="shipments_company_name" class="form-label">اسم شركة الشحن</label>
+                    <input type="text" title="Shipments Company Name" class="form-control" name="shipments_company_name" id="shipments_company_name" value="" spellcheck="false" data-ms-editor="true" disabled>
+                </div>
+                <div class="mb-3">
+                    <label for="cost_of_shipments" class="form-label">تكلفة الشحن</label>
+                    <input type="number" title="Cost of Shipments" class="form-control" name="cost_of_shipments" id="cost_of_shipments" value="" spellcheck="false" data-ms-editor="true">
+                </div>
+                <div id="responseMessageShipments" class="text-success small"></div>
+                <div id="responseErrorShipments" class="text-danger small"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary" onclick="updatePackageShipments()">اضافة</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="closeModal('shipmentsModal')">الغاء</button>
             </div>
         </div>
     </div>
@@ -597,5 +631,42 @@
             });
 
         });
+    </script>
+
+    <script>
+        function updatePackageShipmentsModal(package_id, shipments_company_name, cost_of_shipments) {
+            $('#package_id_shipments').val(package_id);
+            $('#shipments_company_name').val(shipments_company_name);
+            $('#cost_of_shipments').val(cost_of_shipments);
+            $('#responseMessageShipments').text('');
+            $('#responseErrorShipments').text('');
+            $('#shipmentsModal').modal('show');
+        }
+
+        function updatePackageShipments() {
+            showSpinner();
+            package_id = document.getElementById('package_id_shipments').value;
+            cost_of_shipments = document.getElementById('cost_of_shipments').value;
+            $.ajax({
+                url: '/admin/update-package-shipments',
+                type: 'POST',
+                data: {
+                    package_id: package_id,
+                    cost_of_shipments: cost_of_shipments,
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    document.getElementById('responseMessageShipments').innerHTML = "The data has been updated successfully";
+                    hideSpinner();
+                    setTimeout(function() {
+                        location.reload(); // reloads the current page
+                    }, 1000);
+                },
+                error: function(xhr, status, error) {
+                    document.getElementById('responseErrorShipments').innerHTML = "Something wrong, please try again";
+                    hideSpinner();
+                }
+            });
+        }
     </script>
 @endpush

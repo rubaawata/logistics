@@ -526,6 +526,29 @@ class AdminController extends CBController
         }
     }
 
+    public function updatePackageShipments(Request $request)
+    {
+        $package_id = $request->package_id;
+        $cost_of_shipments = $request->cost_of_shipments;
+        try {
+            $updated = Package::where('id', $package_id)->update(['cost_of_shipments' => $cost_of_shipments]);
+            if ($updated) {
+                return response()->json([
+                    'success' => true
+                ], 200);
+            } else {
+                return response()->json([
+                    'success' => false
+                ], 500);
+            }
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false
+            ], 500);
+        }
+    }
+
     public function test(Request $request)
     {
         \Log::info('Test function called');

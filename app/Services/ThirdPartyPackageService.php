@@ -8,6 +8,7 @@ use App\Models\Package;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\ThirdPartyApplication;
+use Illuminate\Support\Facades\Crypt;
 
 class ThirdPartyPackageService
 {
@@ -173,12 +174,14 @@ class ThirdPartyPackageService
                 return false;
             }
 
+            $packageId = $this->encryptId($package->id);
             $payload = [
                 'action'            => $action,
-                'package_id'        => $package->id,
+                'package_id'        => $packageId,
                 'delivery_date'     => $package->delivery_date,
                 'reference_number'  => $package->reference_number,
                 'current_status'    => getPackageStatusEN($package->status),
+                'current_status_code' => $package->status,
                 'failure_reason'    => getReasonMessageEN($package->failure_reason),
             ];
 
@@ -203,5 +206,17 @@ class ThirdPartyPackageService
 
             return false;
         }
+    }
+
+    function encryptId($id)
+    {
+        return $id;
+        return Crypt::encryptString((string) $id);
+    }
+
+    function decryptId($encryptedId)
+    {
+        return $encryptedId;
+        return (int) Crypt::decryptString($encryptedId);
     }
 }

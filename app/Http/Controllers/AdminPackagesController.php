@@ -128,6 +128,8 @@ class AdminPackagesController extends CBController
         $this->form[] = ['label' => 'عدد القطع', 'name' => 'pieces_count', 'type' => 'number', 'validation' => 'required', 'width' => 'col-sm-10'];
 
         $this->form[] = ['label' => 'ملاحظات', 'name' => 'notes', 'type' => 'text', 'validation' => 'min:1', 'width' => 'col-sm-10'];
+        $this->form[] = ['label' => 'شركة الشحن', 'name' => 'shipments_company_name', 'type' => 'text', 'validation' => 'min:1|max:255', 'width' => 'col-sm-10'];
+        $this->form[] = ['label' => 'تكلفة الشحن', 'name' => 'cost_of_shipments', 'type' => 'number', 'validation' => 'integer|min:0', 'width' => 'col-sm-10'];
         $this->form[] = ['label' => 'المبلغ المحصل من الشحنة', 'name' => 'paid_amount', 'type' => 'number', 'validation' => 'integer|min:0', 'width' => 'col-sm-10'];
         //$this->form[] = ['label' => 'جهة تحمّل تكلفة التوصيل', 'name' => 'delivery_fee_payer', 'type' => 'select', 'validation' => 'min:1|max:255', 'width' => 'col-sm-10', 'dataenum' => $this->getDeliveryFeePayer()];
         # END FORM DO NOT REMOVE THIS LINE

@@ -155,6 +155,10 @@
                                     {{number_format($summary['net_amount'], 2)}} 
                                 </span>
                             </div>
+                            <div class="summary-item">
+                                <span class="summary-label">تكلفة الشحن</span>
+                                <span class="summary-value">{{number_format($summary['total_shipments_cost'], 2)}} </span>
+                            </div>
                         </div>
                         <div style="margin-top: 15px;">
                             <form method="POST" action="{{route('third-party-financial-report.export')}}" style="display: inline;">
@@ -196,8 +200,11 @@
                                     <th>تكلفة التوصيل قبل الخصم</th>
                                     <th>تكلفة التوصيل بعد الخصم</th>
                                     <th>مبلغ الخصم على التوصيل</th>
+                                    
                                     <th>المبلغ الصافي للطرف الثالث</th>
                                     <th>سبب الفشل</th>
+                                    <th>شركة الشحن</th>
+                                    <th>تكلفة الشحن</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -286,6 +293,8 @@
                                             {{number_format($netAmount, 2)}} 
                                         </td>
                                         <td>{{$package->failure_reason ? getReasonMessage($package->failure_reason) : '-'}}</td>
+                                        <td>{{$package->shipments_company_name ?? '-'}}</td>
+                                        <td>{{number_format($package->cost_of_shipments ?? 0, 2)}} </td>
                                     </tr>
                                 @endforeach
                             </tbody>
