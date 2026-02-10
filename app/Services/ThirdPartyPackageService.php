@@ -179,10 +179,13 @@ class ThirdPartyPackageService
                 'action'            => $action,
                 'package_id'        => $packageId,
                 'delivery_date'     => $package->delivery_date,
+                'delivery_cost'     => $package->delivery_cost,
                 'reference_number'  => $package->reference_number,
                 'current_status'    => getPackageStatusEN($package->status),
                 'current_status_code' => $package->status,
                 'failure_reason'    => getReasonMessageEN($package->failure_reason),
+                'shipments_company_name' => $package->shipments_company_name,
+                'cost_of_shipments' => $package->cost_of_shipments,
             ];
 
             $response = Http::timeout(5)
