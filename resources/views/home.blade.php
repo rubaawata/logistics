@@ -401,6 +401,7 @@
 
             <div class="modal-body">
                 <input type="hidden" name="package_id_shipments" id="package_id_shipments">
+                <span style="color: red;"> بالضغط على زر تأكيد فأنت تؤكد على تسليم الشحنة لشركة الشحن وأن الشحنة أصبحت بحالة تم التوصيل </span>
                 <div class="mb-3">
                     <label for="shipments_company_name" class="form-label">اسم شركة الشحن</label>
                     <input type="text" title="Shipments Company Name" class="form-control" name="shipments_company_name" id="shipments_company_name" value="" spellcheck="false" data-ms-editor="true" disabled>
@@ -413,7 +414,7 @@
                 <div id="responseErrorShipments" class="text-danger small"></div>
             </div>
             <div class="modal-footer">
-                <button type="submit" class="btn btn-primary" onclick="updatePackageShipments()">اضافة</button>
+                <button type="submit" class="btn btn-primary" onclick="updatePackageShipments()">تأكيد</button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="closeModal('shipmentsModal')">الغاء</button>
             </div>
         </div>

@@ -529,6 +529,8 @@ class AdminController extends CBController
         $cost_of_shipments = $request->cost_of_shipments;
         try {
             $updated = Package::where('id', $package_id)->update(['cost_of_shipments' => $cost_of_shipments]);
+            $package = Package::find($package_id);
+            $this->shipmentService->markAsDelivered($package_id, $package->package_cost, $package->pieces_count);
             if ($updated) {
                 return response()->json([
                     'success' => true

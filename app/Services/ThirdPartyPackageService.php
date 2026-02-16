@@ -158,6 +158,7 @@ class ThirdPartyPackageService
 
     public function sendNotificationToThirdParty(int $packageId, string $action): bool
     {
+        \Log::info('Sending notification to third party', ['package_id' => $packageId, 'action' => $action]);
         try {
             $package = Package::find($packageId);
             if (!$package) {
@@ -166,6 +167,8 @@ class ThirdPartyPackageService
             }
 
             $thirdParty = ThirdPartyApplication::find($package->third_party_application_id);
+            
+            \Log::info('Third party webhook URL', ['webhook_url' => $thirdParty->webhook_url]);
             if (!$thirdParty || !$thirdParty->webhook_url) {
                 Log::warning('Third party or webhook URL missing', [
                     'package_id' => $packageId,
@@ -179,14 +182,16 @@ class ThirdPartyPackageService
                 'action'            => $action,
                 'package_id'        => $packageId,
                 'delivery_date'     => $package->delivery_date,
-                'delivery_cost'     => $package->delivery_cost,
+                'delivery_cost'     => (float)$package->delivery_cost,
                 'reference_number'  => $package->reference_number,
                 'current_status'    => getPackageStatusEN($package->status),
                 'current_status_code' => $package->status,
                 'failure_reason'    => getReasonMessageEN($package->failure_reason),
                 'shipments_company_name' => $package->shipments_company_name,
-                'cost_of_shipments' => $package->cost_of_shipments,
+                'cost_of_shipments' => (float)$package->cost_of_shipments,
             ];
+
+            \Log::info('Payload: ' . json_encode($payload));
 
             $response = Http::timeout(5)
                 ->retry(2, 100)
