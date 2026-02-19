@@ -30,6 +30,12 @@
 
 @section('content')
 
+<div class="alert alert-warning" id="waiting-and-new-packages-alert" style="display: none;">
+    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+    <h4><i class="icon fa fa-info"></i>تنبيه!</h4>
+    <p id="waiting-and-new-packages-message-old-p" style="display: none;">يرجى الانتباه هناك طلبات قديمة لم تتم معالجتها بعد وهي <span id="waiting-and-new-packages-message-old"></span></p>
+    <p id="waiting-and-new-packages-message-new-p" style="display: none;">لديك طلبات جديدة من المتعاقدين لديك <span id="waiting-and-new-packages-message-new-count"></span></p>
+</div>
 <div class="row">
     <div class="col-sm-12">
         <div class="box">
@@ -666,6 +672,41 @@
                 error: function(xhr, status, error) {
                     document.getElementById('responseErrorShipments').innerHTML = "Something wrong, please try again";
                     hideSpinner();
+                }
+            });
+        }
+    </script>
+
+    <script>
+        getWaitingAndNewPackages();
+        setInterval(getWaitingAndNewPackages, 5 * 60 * 1000);
+        function getWaitingAndNewPackages() {
+            $.ajax({
+                url: '/admin/waiting-and-new-packages',
+                type: 'GET',
+                success: function(response) {
+                    console.log(response);
+                    if(response.success) {
+                        if(response.not_delivered_packages_count > 0 || response.new_packages_count > 0) {
+                            $('#waiting-and-new-packages-alert').show();
+                            if(response.not_delivered_packages_count > 0) {
+                                $('#waiting-and-new-packages-message-old-p').show();
+                                $('#waiting-and-new-packages-message-old').text(response.not_delivered_packages_ids);
+                            } else {
+                                $('#waiting-and-new-packages-message-old-p').hide();
+                                $('#waiting-and-new-packages-message-old').text('');
+                            }
+                            if(response.new_packages_count > 0) {
+                                $('#waiting-and-new-packages-message-new-p').show();
+                                $('#waiting-and-new-packages-message-new-count').text(response.new_packages_count);
+                            } else {
+                                $('#waiting-and-new-packages-message-new-p').hide();
+                                $('#waiting-and-new-packages-message-new').text('');
+                            }
+                            return;
+                        } 
+                    }
+                    $('#waiting-and-new-packages-alert').hide();
                 }
             });
         }

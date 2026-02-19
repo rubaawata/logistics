@@ -551,6 +551,23 @@ class AdminController extends CBController
         }
     }
 
+    public function getWaitingAndNewPackages()
+    {
+        $new_packages = Package::where('status', '6')->count();
+        $not_delivered_packages = Package::where('status', '5')->where('delivery_date', '<', today()->toDateString())->get();
+
+        $not_delivered_packages_ids = '';
+        foreach($not_delivered_packages as $package) {
+            $not_delivered_packages_ids .= $package->id . ', ';
+        }
+        return response()->json([
+            'success' => true,
+            'new_packages_count' => $new_packages,
+            'not_delivered_packages_ids' => $not_delivered_packages_ids,
+            'not_delivered_packages_count' => count($not_delivered_packages),
+        ], 200);
+    }
+
     public function test(Request $request)
     {
         \Log::info('Test function called');

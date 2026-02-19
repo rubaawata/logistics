@@ -24,6 +24,7 @@ Route::get('/', function () {
 
 Route::get('/admin', [AdminController::class, 'getHome']);
 Route::get('/admin/pending-packages', [AdminController::class, 'getPendingPackages']);
+Route::get('/admin/waiting-and-new-packages', [AdminController::class, 'getWaitingAndNewPackages']);
 Route::post('/admin/update-package-status', [AdminController::class, 'updatePackageStatus']);
 Route::post('/admin/update-package-delivery', [AdminController::class, 'updatePackageDelivery']);
 Route::post('/admin/update-package-delivery-info', [AdminController::class, 'updatePackageDeliveryInfo']);
