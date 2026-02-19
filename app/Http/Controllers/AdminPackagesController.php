@@ -44,14 +44,18 @@ class AdminPackagesController extends CBController
 
         # START COLUMNS DO NOT REMOVE THIS LINE
         $this->col = [];
+        $this->col[] = ["label" => "رقم الشحنة", "name" => "id"];
         $this->col[] = ["label" => "البائع", "name" => "seller_id", "join" => "sellers,seller_name"];
         $this->col[] = ["label" => "الزيون", "name" => "customer_id", "join" => "customers,name"];
         $this->col[] = ["label" => "المنطقة", "name" => "area_id", "join" => "areas,name"];
+        $this->col[] = ["label" => "شركة الشحن", "name" => "shipments_company_name"];
+        $this->col[] = ["label" => "العنوان", "name" => "location_text"];
         $this->col[] = ["label" => "المندوب", "name" => "delivery_id", "join" => "deliveries,name"];
         $this->col[] = ["label" => "تكلفة التوصيل", "name" => "delivery_cost"];
         $this->col[] = ["label" => "سعر الشحنة", "name" => "package_cost"];
         $this->col[] = ["label" => "تاريخ التوصيل", "name" => "delivery_date"];
         $this->col[] = ["label" => "تاريخ التوصيل", "name" => "delivery_date"];
+        
 
         $this->col[] = [
             "label" => "سبب الفشل (مخفي)",

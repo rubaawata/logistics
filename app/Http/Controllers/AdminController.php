@@ -501,16 +501,19 @@ class AdminController extends CBController
 
         $third_party_applications = ThirdPartyApplication::all();
 
-        return view('third_party.pending_packages', compact('packages', 'third_party_applications', 'selected_package_id', 'selected_third_party_application_id'));
+        $deliveries = Delivery::all();
+
+        return view('third_party.pending_packages', compact('packages', 'third_party_applications', 'selected_package_id', 'selected_third_party_application_id', 'deliveries'));
     }
 
     public function confirmPackageReceived(Request $request)
     {
         $package_id = $request->package_id;
         $delivery_date = $request->delivery_date;
+        $delivery_id = $request->delivery_id;
         try {
             $delivery_date = Carbon::createFromFormat('d/m/Y', $delivery_date);
-            $this->shipmentService->markAsPending($package_id, $delivery_date->toDateString());
+            $this->shipmentService->markAsPending($package_id, $delivery_date->toDateString(), $delivery_id);
             return response()->json([
                 'success' => true
             ], 200);

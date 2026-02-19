@@ -87,6 +87,7 @@
                     <thead>
                         <tr>
                             <th>رقم الشحنة</th>
+                            <th>رقم شحنة المتعاقد</th>
                             <th>اسم البائع</th>
                             <th>رقم هاتف البائع</th>
                             <th>عنوان البائع</th>
@@ -102,6 +103,7 @@
                         @foreach($packages as $item)
                             <tr>
                                 <td>{{$item['id']}}</td>
+                                <td>{{$item['reference_number']}}</td>
                                 <td>{{$item['seller']['seller_name']}}</td>
                                 <td>{{$item['seller']['phone_number']}}</td>
                                 <td>{{$item['seller']['location_text_1']}}</td>
@@ -112,6 +114,7 @@
                                 <td>{{$item['area']['name']}}</td>
                                 <td>
                                     <button class="btn btn-xs btn-success btn-edit" onclick="confirmPackageReceivedModal({{$item['id']}})">تأكيد استلام الشحنة</button>
+                                    <a class="btn btn-xs btn-warning btn-edit" href="/admin/packages/edit/{{$item['id']}}">تعديل الشحنة</a>
                                 </td>
                             </tr>
                         @endforeach
@@ -138,6 +141,16 @@
                         <span class="input-group-addon open-datetimepicker"><a><i class="fa fa-calendar "></i></a></span>
                         <input type="text" title="Delivery Date" readonly="" required="" class="form-control notfocus input_date" name="delivery_date" id="delivery_date" value="{{now()->format('d/m/Y')}}">
                     </div>
+                </div>
+                <div class="mb-3">
+                    <label for="delivery_id" class="form-label">اختر مندوب جديد</label>
+                    <select class="form-control" id="package_delivery_id" data-value="" required="" name="package_delivery_id">
+                        <option value="">** رجاءً اختر مندوب</option>
+                        @foreach ($deliveries as $item)
+                            <option value="{{$item['id']}}">{{$item['name']}}</option>
+                        @endforeach      
+                    </select>
+                    
                 </div>
                 <div id="responseMessageStatus" class="text-success small"></div>
                 <div id="responseErrorStatus" class="text-danger small"></div>
@@ -206,12 +219,14 @@
             showSpinner();
             package_id = document.getElementById('package_id').value;
             delivery_date = document.getElementById('delivery_date').value;
+            delivery_id = document.getElementById('package_delivery_id').value;
             $.ajax({
                 url: '/admin/confirm-package-received',
                 type: 'POST',
                 data: {
                     package_id: package_id,
                     delivery_date: delivery_date,
+                    delivery_id: delivery_id,
                     _token: '{{ csrf_token() }}'
                 },
                 success: function(response) {

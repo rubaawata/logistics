@@ -113,12 +113,13 @@ class ShipmentService
         return $updated;
     }
 
-    public function markAsPending($shipmentId, $delivery_date)
+    public function markAsPending($shipmentId, $delivery_date, $delivery_id)
     {
         $updated = $this->repository->updateShipmentStatus($shipmentId, 5, [
             'delivery_date' => $delivery_date,
             'delivery_date_1' => $delivery_date,
-            'package_enter_Hub' => 1
+            'package_enter_Hub' => 1,
+            'delivery_id' => $delivery_id
         ]);
         if($updated) {
             $this->thirdPartyPackageService->sendNotificationToThirdParty($shipmentId, 'confirm_package_received');
