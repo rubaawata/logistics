@@ -167,7 +167,22 @@
                                 </div>
                             </div>
                         </div>
-                        
+                        <div class="col-lg-6">
+                            <div class="form-group form-datepicker header-group-0 " id="form-group-area_id" style="">
+                                <label class="control-label col-sm-4">
+                                   الشحنات المطلوب توصيلها لشركة شحن مثل ترابط
+                                </label>
+                                <div class="col-sm-8">
+                                    <div class="input-group" style='width:100%'>
+                                        <select style='width:100%' class='form-control select2' id="shipments_packages_only" name="shipments_packages_only">
+                                            <option {{$selected_shipments_packages_only == 0 ? 'selected' : ''}} value="0">لا، الكل</option>
+                                            <option {{$selected_shipments_packages_only == 1 ? 'selected' : ''}} value="1">نعم فقط الشحنات المتعلقة بشركات الشحن </option>
+                                        </select>
+                                    </div>
+                                    <p class="help-block"></p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="row">
                         <div class="col-lg-12">
@@ -254,6 +269,7 @@
                                     <a class="btn btn-xs btn-success btn-edit" href="admin/packages/bill-of-lading/{{$item['id']}}" target="_blank">البوليصة</a>
                                     <button class="btn btn-xs btn-primary btn-edit" onclick="redirectToWhatsApp('{{$item['customer']['phone_number']}}')">واتساب</button>
                                     <button class="btn btn-xs btn-primary btn-edit" onclick="updatePackageShipmentsModal({{$item['id']}}, '{{$item['shipments_company_name']}}', '{{$item['cost_of_shipments']}}')">اضافة أجور لشركة الشحن</button>
+                                    <a class="btn btn-xs btn-warning btn-edit" href="/admin/packages/edit/{{$item['id']}}">تعديل كامل الشحنة</a>
                                 </td>
                             </tr>
                         @endforeach

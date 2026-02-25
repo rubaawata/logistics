@@ -96,6 +96,7 @@
                             <th>كلفة التوصيل</th>
                             <th>سعر الشحنة</th>
                             <th>المنطقة</th>
+                            <th>جهة تحمّل تكلفة التوصيل</th>
                             <th>العمليات</th>
                         </tr>
                     </thead>
@@ -112,6 +113,7 @@
                                 <td>{{$item['delivery_cost']}}</td>
                                 <td>{{$item['package_cost']}}</td>
                                 <td>{{$item['area']['name']}}</td>
+                                <td>{{config('constants.DELIVERY_FEE_PAYER')[$item['delivery_fee_payer']] ?? '---'}}</td>
                                 <td>
                                     <button class="btn btn-xs btn-success btn-edit" onclick="confirmPackageReceivedModal({{$item['id']}})">تأكيد استلام الشحنة</button>
                                     <a class="btn btn-xs btn-warning btn-edit" href="/admin/packages/edit/{{$item['id']}}">تعديل الشحنة</a>

@@ -61,6 +61,7 @@ class AdminController extends CBController
         $selected_delivery = $request->input('delivery_id');
         $selected_package_id = $request->input('package_id');
         $selected_status = $request->input('package_status');
+        $selected_shipments_packages_only = $request->input('shipments_packages_only');
 
         //$selected_date_to = $request->input('date_to');
 
@@ -122,6 +123,13 @@ class AdminController extends CBController
             $packages->where('status', $selected_status);
         }
 
+        if (!is_null($selected_shipments_packages_only) && $selected_shipments_packages_only !== 'null' && $selected_shipments_packages_only == 1) {
+            $packages->where(function ($query) {
+                $query->whereNotNull('shipments_company_name')
+                      ->where('shipments_company_name', '!=', '');
+            });
+        }
+
         $packages = $packages->get();
 
         $deliveries = Delivery::get();
@@ -143,7 +151,8 @@ class AdminController extends CBController
                                                           'selected_seller',
                                                           'selected_delivery',
                                                           'selected_package_id',
-                                                          'selected_status'));
+                                                          'selected_status',
+                                                          'selected_shipments_packages_only'));
     }
 
     private function getDeliveryDailyReport($selected_date_from, $selected_date_to)
