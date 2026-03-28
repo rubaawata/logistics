@@ -7,7 +7,7 @@ if (!function_exists('getPackageStatus')) {
         $statusName = $statuses[$status] ?? 'غير معروف';
         $today = today()->toDateString();
         if ($delivery_date && $status === 5 && $delivery_date != $today) {
-            return 'مؤجلة';
+            return 'مؤجلة' . ' (' . $delivery_date . ')';
         }
         return $statusName;
     }
@@ -21,7 +21,7 @@ if (!function_exists('getPackageStatusEn')) {
         $statusName = $statuses[$status] ?? 'غير معروف';
         $today = today()->toDateString();
         if ($delivery_date && $status === 5 && $delivery_date != $today) {
-            return 'Delayed';
+            return 'Delayed' . '(' . $delivery_date . ')';
         }
         return $statusName;
     }

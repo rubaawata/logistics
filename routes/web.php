@@ -45,6 +45,9 @@ Route::get('/clear/cache', function () {
 Route::get('admin/export-delivery-report/{id}', [DeliveryDashboardController::class, 'report']);
 Route::get('admin/export-seller-report/{id}', [DeliveryDashboardController::class, 'seller']);
 
+//TODO
+Route::get('admin/export-third-party-report/{id}', [DeliveryDashboardController::class, 'thirdParty']);
+
 // Third Party Financial Report
 Route::get('/admin/third-party-financial-report', [ThirdPartyFinancialReportController::class, 'index'])->name('third-party-financial-report.index');
 Route::post('/admin/third-party-financial-report/export', [ThirdPartyFinancialReportController::class, 'export'])->name('third-party-financial-report.export');

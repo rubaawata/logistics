@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Delivery;
 use App\Models\Package;
 use App\Models\Seller;
+use App\Models\ThirdPartyApplication;
 use App\Services\DeliveryAuthService;
 use App\Services\ShipmentService;
 use Illuminate\Http\Request;
@@ -140,5 +141,37 @@ class DeliveryDashboardController extends Controller
 
 
         return view('pdf.seller_report', $data);
+    }
+
+    public function thirdParty($id)
+    {
+        $third_Party= ThirdPartyApplication::where('id', '=', $id)->first();
+     
+        $package = Package::where('third_party_application_id', $third_Party->id)
+            ->where(function ($query) {
+                $today = today()->toDateString();
+
+                $query->whereDate('delivery_date', $today)
+                    ->orWhereDate('delivery_date_1', $today)
+                    ->orWhereDate('delivery_date_2', $today)
+                    ->orWhereDate('delivery_date_3', $today);
+            })
+            ->with(['Customer', 'ThirdPartyApplication'])
+            ->get();
+
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'default_font' => 'dejavusans',
+            'format' => [200, 180],
+            'directionality' => 'rtl',
+        ]);
+        $data = [
+            'packages' => $package,
+            'third_party_name' => $third_Party->company_name,
+            'report_date' => now()->format('Y-m-d H:i:s'),
+        ];
+
+
+        return view('pdf.third_party_report', $data);
     }
 }

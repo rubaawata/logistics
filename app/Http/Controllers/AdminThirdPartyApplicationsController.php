@@ -3,9 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\ThirdPartyApplication;
+use App\Models\Package;
 use Illuminate\Support\Facades\DB;
 use crocodicstudio\crudbooster\helpers\CRUDBooster;
 use crocodicstudio\crudbooster\controllers\CBController;
+use Mpdf\Mpdf;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\ThirdPartyReportExport;
 
 class AdminThirdPartyApplicationsController extends CBController
 {
@@ -85,6 +89,31 @@ class AdminThirdPartyApplicationsController extends CBController
             'url' => CRUDBooster::mainpath('regenerate-api-key/[id]'),
             'icon' => 'fa fa-key',
             'color' => 'warning',
+        ];
+
+        $this->addaction[] = [
+            'label' => 'تصدير PDF',
+            'url'   => CRUDBooster::mainpath('export-third-party-report/[id]'),
+            'icon' => 'fa fa-file-pdf-o',
+            'color' => 'success',
+            'target' => '_blank',
+        ];
+
+
+
+        $this->addaction[] = [
+            'label' => 'تصدير Excel',
+            'url'   => CRUDBooster::mainpath('export-third-party-report-excel/[id]'),
+            'icon'  => 'fa fa-file-excel-o',
+            'color' => 'success',
+            'target' => '_blank',
+        ];
+        $this->addaction[] = [
+            'label' => 'مشاهدة فقط',
+            'url'   => 'export-third-party-report/[id]',
+            'icon'  => 'fa fa-file-excel-o',
+            'color' => 'success',
+            'target' => '_blank',
         ];
 
         $this->button_selected = array();
@@ -184,6 +213,55 @@ class AdminThirdPartyApplicationsController extends CBController
         ]);
 
         CRUDBooster::redirect(CRUDBooster::mainpath('view-api-credentials/' . $id), 'تم إعادة توليد مفتاح API بنجاح. يرجى حفظ المفاتيح الجديدة.', 'success');
+    }
+
+    public function getExportThirdPartyReport($id)
+    {
+        $thirdParty = ThirdPartyApplication::where('id', '=', $id)->first();
+
+        $package = Package::where('third_party_application_id', $thirdParty->id)
+        ->where(function ($query) {
+            $today = today()->toDateString();
+
+            $query->whereDate('delivery_date', $today)
+                ->orWhereDate('delivery_date_1', $today)
+                ->orWhereDate('delivery_date_2', $today)
+                ->orWhereDate('delivery_date_3', $today);
+        })
+        ->with(['Customer', 'ThirdPartyApplication'])
+        ->get();
+
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'default_font' => 'dejavusans',
+            'format' => [200, 180],
+            'directionality' => 'rtl',
+        ]);
+        $data = [
+            'packages' => $package,
+            'third_party_name' => $thirdParty->company_name,
+            'report_date' => now()->format('Y-m-d'),
+        ];
+
+
+        $html = view('pdf.third_party_report', $data)->render();
+
+        $mpdf->WriteHTML($html);
+
+        return response($mpdf->Output('', 'S'), 200)
+            ->header('Content-Type', 'application/pdf');
+    }
+
+    public function getExportThirdPartyReportExcel($id)
+    {
+        $thirdParty = ThirdPartyApplication::findOrFail($id);
+        
+        $filename = 'تقرير_التاجر_' . $thirdParty->seller_name . '_' . now()->format('Y-m-d') . '.xlsx';
+    
+        return Excel::download(
+            new ThirdPartyReportExport($thirdParty->id, $thirdParty->seller_name), 
+            $filename
+        );
     }
 }
 
