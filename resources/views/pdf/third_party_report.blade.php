@@ -61,6 +61,25 @@
 </head>
 
 <body>
+    <div class="no-print" style="margin-bottom: 20px; background: #eee; padding: 10px; border-radius: 5px; display: flex; align-items: center; gap: 10px;">
+        <label for="report_date_select"><strong>اختر التاريخ:</strong></label>
+        <input type="date" id="report_date_select" value="{{ $report_date }}" 
+            onchange="window.location.href='/admin/export-third-party-report/{{ $id }}/' + this.value">
+        
+        <button onclick="window.print()" style="margin-right: 20px;">طباعة تقرير PDF</button>
+
+        <a id="excel_export_btn" class="btn btn-success" title="تصدير Excel" target="_blank" 
+           href="https://tawaridsy.com/admin/third_party_applications/export-third-party-report-excel/{{ $id }}/{{ $report_date }}">
+            <i class="fa fa-file-excel-o"></i> تصدير Excel
+        </a>
+    </div>
+
+    <style>
+        /* Hide the date picker when printing the actual PDF */
+        @media print {
+            .no-print { display: none; }
+        }
+    </style>
     <table class="header-table" style="width:100%; margin-bottom: 10px;">
         <tr>
             <td style="width:25%;"><strong>اسم التاجر / المسوق :</strong> {{ $third_party_name }}</td>
@@ -184,5 +203,16 @@
         </tr>
     </table>--}}
 
+
+    <script>
+        // Listen for date changes
+        document.getElementById('report_date_select').addEventListener('change', function() {
+            const selectedDate = this.value;
+            const thirdPartyId = "{{ $id }}";
+            
+            // Reload the page to show new date data
+            window.location.href = '/admin/export-third-party-report/' + thirdPartyId + '/' + selectedDate;
+        });
+    </script>
 </body>
 </html>

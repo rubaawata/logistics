@@ -16,16 +16,20 @@ class ThirdPartyReportExport implements FromCollection, WithHeadings, WithMappin
 {
     protected $thirdPartyId;
     protected $thirdPartyName;
+    protected $date;
 
-    public function __construct($thirdPartyId, $thirdPartyName)
+    public function __construct($thirdPartyId, $thirdPartyName, $date = null)
     {
         $this->thirdPartyId = $thirdPartyId;
         $this->thirdPartyName = $thirdPartyName;
+
+        $this->date = $date ?: today()->toDateString();
     }
 
     public function collection()
     {
-        $today = today()->toDateString();
+        //$today = today()->toDateString();
+        $today = $this->date;
 
         $packages = Package::where('third_party_application_id', $this->thirdPartyId)
             ->where(function ($query) use ($today) {

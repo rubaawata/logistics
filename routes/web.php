@@ -46,7 +46,7 @@ Route::get('admin/export-delivery-report/{id}', [DeliveryDashboardController::cl
 Route::get('admin/export-seller-report/{id}', [DeliveryDashboardController::class, 'seller']);
 
 //TODO
-Route::get('admin/export-third-party-report/{id}', [DeliveryDashboardController::class, 'thirdParty']);
+Route::get('admin/export-third-party-report/{id}/{date?}', [DeliveryDashboardController::class, 'thirdParty']);
 
 // Third Party Financial Report
 Route::get('/admin/third-party-financial-report', [ThirdPartyFinancialReportController::class, 'index'])->name('third-party-financial-report.index');

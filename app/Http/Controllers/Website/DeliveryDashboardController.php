@@ -143,18 +143,19 @@ class DeliveryDashboardController extends Controller
         return view('pdf.seller_report', $data);
     }
 
-    public function thirdParty($id)
+    public function thirdParty($id, $date = null)
     {
+        $selectedDate = $date ?: today()->toDateString();
         $third_Party= ThirdPartyApplication::where('id', '=', $id)->first();
      
         $package = Package::where('third_party_application_id', $third_Party->id)
-            ->where(function ($query) {
+            ->where(function ($query) use ($selectedDate) {
                 $today = today()->toDateString();
 
-                $query->whereDate('delivery_date', $today)
-                    ->orWhereDate('delivery_date_1', $today)
-                    ->orWhereDate('delivery_date_2', $today)
-                    ->orWhereDate('delivery_date_3', $today);
+                $query->whereDate('delivery_date', $selectedDate)
+                    ->orWhereDate('delivery_date_1', $selectedDate)
+                    ->orWhereDate('delivery_date_2', $selectedDate)
+                    ->orWhereDate('delivery_date_3', $selectedDate);
             })
             ->with(['Customer', 'ThirdPartyApplication'])
             ->get();
@@ -166,9 +167,10 @@ class DeliveryDashboardController extends Controller
             'directionality' => 'rtl',
         ]);
         $data = [
+            'id' => $id,
             'packages' => $package,
             'third_party_name' => $third_Party->company_name,
-            'report_date' => now()->format('Y-m-d H:i:s'),
+            'report_date' => $selectedDate,
         ];
 
 

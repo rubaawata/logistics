@@ -252,14 +252,14 @@ class AdminThirdPartyApplicationsController extends CBController
             ->header('Content-Type', 'application/pdf');
     }
 
-    public function getExportThirdPartyReportExcel($id)
+    public function getExportThirdPartyReportExcel($id, $date = null)
     {
         $thirdParty = ThirdPartyApplication::findOrFail($id);
         
         $filename = 'تقرير_التاجر_' . $thirdParty->seller_name . '_' . now()->format('Y-m-d') . '.xlsx';
     
         return Excel::download(
-            new ThirdPartyReportExport($thirdParty->id, $thirdParty->seller_name), 
+            new ThirdPartyReportExport($thirdParty->id, $thirdParty->seller_name, $date), 
             $filename
         );
     }
