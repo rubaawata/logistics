@@ -135,7 +135,7 @@ class AdminPackagesController extends CBController
         $this->form[] = ['label' => 'شركة الشحن', 'name' => 'shipments_company_name', 'type' => 'text', 'validation' => 'min:1|max:255', 'width' => 'col-sm-10'];
         //$this->form[] = ['label' => 'تكلفة الشحن', 'name' => 'cost_of_shipments', 'type' => 'number', 'validation' => 'integer|min:0', 'width' => 'col-sm-10', 'default' => 0.0];
         $this->form[] = ['label' => 'المبلغ المحصل من الشحنة', 'name' => 'paid_amount', 'type' => 'number', 'validation' => 'integer|min:0', 'width' => 'col-sm-10'];
-        //$this->form[] = ['label' => 'جهة تحمّل تكلفة التوصيل', 'name' => 'delivery_fee_payer', 'type' => 'select', 'validation' => 'min:1|max:255', 'width' => 'col-sm-10', 'dataenum' => $this->getDeliveryFeePayer()];
+        $this->form[] = ['label' => 'جهة تحمّل تكلفة التوصيل', 'name' => 'delivery_fee_payer', 'type' => 'select', 'validation' => 'required', 'width' => 'col-sm-10', 'dataenum' => $this->getDeliveryFeePayer()];
         # END FORM DO NOT REMOVE THIS LINE
 
         # OLD START FORM
@@ -961,10 +961,12 @@ class AdminPackagesController extends CBController
     {
         $deliveryFeePayer = config('constants.DELIVERY_FEE_PAYER');
         $deliveryFeePayerStr = '';
+        $i = 0;
         foreach ($deliveryFeePayer as $index => $item) {
             $deliveryFeePayerStr .= $index . '|' . $item;
-            if ($index < count($deliveryFeePayer))
+            if ($i < count($deliveryFeePayer) - 1)
                 $deliveryFeePayerStr .= ';';
+            $i++;
         }
         return $deliveryFeePayerStr;
     }

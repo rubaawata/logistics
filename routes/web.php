@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Website\DeliveriesLoginController;
 use App\Http\Controllers\Website\DeliveryDashboardController;
+use App\Http\Controllers\Website\SellersLoginController;
+use App\Http\Controllers\Website\SellerPackagesController;
 use App\Http\Controllers\ThirdPartyFinancialReportController;
 
 /*
@@ -66,5 +68,19 @@ Route::prefix('delivery')->name('deliveries.')->group(function () {
             ->name('shipments.delivered');
         Route::post('/shipments/{shipment}/failed', [DeliveryDashboardController::class, 'markAsFailed'])
             ->name('shipments.failed');
+    });
+});
+
+
+Route::prefix('seller')->name('sellers.')->group(function () {
+    Route::get('/login', [SellersLoginController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [SellersLoginController::class, 'login'])->name('login.submit');
+    Route::get('/logout', [SellersLoginController::class, 'logout'])->name('logout');
+
+    Route::middleware('auth:seller')->group(function () {
+        Route::get('/packages', [SellerPackagesController::class, 'index'])->name('packages.index');
+        Route::get('/packages/create', [SellerPackagesController::class, 'create'])->name('packages.create');
+        Route::post('/packages', [SellerPackagesController::class, 'store'])->name('packages.store');
+        Route::get('/packages/{id}', [SellerPackagesController::class, 'show'])->name('packages.show');
     });
 });

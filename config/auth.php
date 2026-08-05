@@ -57,6 +57,17 @@ return [
             'provider' => 'deliveries',
             'hash' => false,
         ],
+
+        'seller' => [
+            'driver' => 'session',
+            'provider' => 'sellers',
+        ],
+
+        'seller-api' => [
+            'driver' => 'token',
+            'provider' => 'sellers',
+            'hash' => false,
+        ],
     ],
 
     /*
@@ -90,6 +101,11 @@ return [
         'deliveries' => [
             'driver' => 'eloquent',
             'model' => App\Models\Delivery::class,
+        ],
+
+        'sellers' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Seller::class,
         ],
     ],
 

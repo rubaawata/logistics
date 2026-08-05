@@ -20,6 +20,9 @@ class Authenticate extends Middleware
             if ($guard === 'delivery') {
                 return route('deliveries.login');
             }
+            if ($guard === 'seller') {
+                return route('sellers.login');
+            }
             return route('login');
         }
     }
@@ -30,15 +33,15 @@ class Authenticate extends Middleware
 
         if ($route && $route->getAction('middleware')) {
             $middleware = $route->getAction('middleware');
+            $middleware = is_array($middleware) ? $middleware : [$middleware];
 
-            if (is_array($middleware)) {
-                foreach ($middleware as $item) {
-                    if (str_contains($item, 'auth:delivery')) {
-                        return 'delivery';
-                    }
+            foreach ($middleware as $item) {
+                if (str_contains($item, 'auth:delivery')) {
+                    return 'delivery';
                 }
-            } elseif (str_contains($middleware, 'auth:delivery')) {
-                return 'delivery';
+                if (str_contains($item, 'auth:seller')) {
+                    return 'seller';
+                }
             }
         }
 

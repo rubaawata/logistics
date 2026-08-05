@@ -49,6 +49,7 @@ class AdminSellersController extends CBController
         $this->col[] = ["label" => "رقم الموبايل", "name" => "phone_number"];
         $this->col[] = ["label" => "رقم الارضي", "name" => "landline_number"];
         $this->col[] = ["label" => "الايميل", "name" => "email"];
+        $this->col[] = ["label" => "كلمة السر", "name" => "password", "callback_php" => 'str_repeat("*", 8)'];
         $this->col[] = ["label" => "رصيد الشحنات", "name" => "(select sum(packages.package_cost) from packages where packages.seller_id = sellers.id and packages.status = 1) as packages_balance"];
         $this->col[] = ["label" => "الدفعات", "name" => "(select sum(payments.amount) from payments where payments.seller_id = sellers.id) as payments_balance"];
         $this->col[] = ["label" => "الرصيد", "name" => "seller_name", "callback" => function ($row) {
@@ -63,6 +64,7 @@ class AdminSellersController extends CBController
         $this->form[] = ['label' => 'رقم الموبايل', 'name' => 'phone_number', 'type' => 'number', 'validation' => 'required|numeric', 'width' => 'col-sm-10', 'placeholder' => 'You can only enter the number only'];
         $this->form[] = ['label' => 'رقم الارضي', 'name' => 'landline_number', 'type' => 'text', 'validation' => 'min:1|max:255', 'width' => 'col-sm-10'];
         $this->form[] = ['label' => 'الايميل', 'name' => 'email', 'type' => 'email', 'validation' => 'min:1|max:255|email|unique:sellers', 'width' => 'col-sm-10', 'placeholder' => 'Please enter a valid email address'];
+        $this->form[] = ['label' => 'كلمة السر (لدخول التاجر)', 'name' => 'password', 'type' => 'password', 'validation' => 'required|string|min:6', 'width' => 'col-sm-10', 'placeholder' => 'Enter a secure password'];
         $this->form[] = ['label' => 'رابط العنوان الاول', 'name' => 'location_link_1', 'type' => 'text', 'validation' => 'min:1|max:255', 'width' => 'col-sm-10'];
         $this->form[] = ['label' => 'العنوان الاول', 'name' => 'location_text_1', 'type' => 'text', 'validation' => 'min:1|max:255', 'width' => 'col-sm-10'];
         $this->form[] = ['label' => 'رابط العنوان الثاني', 'name' => 'location_link_2', 'type' => 'text', 'validation' => 'min:1|max:255', 'width' => 'col-sm-10'];
