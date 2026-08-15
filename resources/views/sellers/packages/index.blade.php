@@ -9,26 +9,30 @@
             padding: 0;
         }
 
-        .packages-table {
-            margin-bottom: 0;
-            color: #1f2d3d;
+        .package-item {
+            border: 1px solid #e3e8ee;
+            border-radius: .5rem;
+            transition: box-shadow .2s ease;
         }
 
-        .packages-table thead th {
-            background-color: var(--color-primary);
-            color: #fff;
-            font-weight: 600;
-            white-space: nowrap;
-            border: none;
+        .package-item:hover {
+            box-shadow: 0 .25rem 1rem rgba(0, 0, 0, .08);
         }
 
-        .packages-table tbody td {
-            vertical-align: middle;
-            color: #1f2d3d;
+        .package-item .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e3e8ee;
         }
 
-        .packages-table tbody tr:hover {
-            background-color: #eef2f6;
+        .package-meta {
+            font-size: .85rem;
+            color: var(--bs-secondary-color);
+        }
+
+        .package-meta i {
+            color: var(--bs-secondary-color);
+            width: 1.1rem;
+            text-align: center;
         }
 
         .tracking-code {
@@ -89,67 +93,64 @@
                     <h6 class="mb-0"><i class="fas fa-box"></i> شحناتي</h6>
                     <span class="badge bg-light text-dark">{{ $packages->total() }}</span>
                 </div>
-                <div class="card-body table-responsive">
-                    <table class="table table-hover packages-table text-end">
-                        <thead>
-                            <tr>
-                                <th>رقم التتبع</th>
-                                <th>المستلم</th>
-                                <th>الوجهة</th>
-                                <th>الحالة</th>
-                                <th>تاريخ الإنشاء</th>
-                                <th>تفاصيل</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($packages as $package)
-                                @php
-                                    $statusColors = [
-                                        1 => 'success',
-                                        2 => 'secondary',
-                                        3 => 'danger',
-                                        4 => 'info',
-                                        5 => 'warning',
-                                        6 => 'primary',
-                                    ];
-                                    $statusColor = $statusColors[$package->status] ?? 'secondary';
-                                @endphp
-                                <tr>
-                                    <td><span class="tracking-code">{{ $package->reference_number ?? '#' . $package->id }}</span></td>
-                                    <td>
-                                        {{ optional($package->Customer)->name ?? '—' }}
-                                        @if (optional($package->Customer)->phone_number)
-                                            <br><small class="text-muted">{{ $package->Customer->phone_number }}</small>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        {{ optional($package->Area)->name ?? '—' }}
-                                        @if ($package->location_text)
-                                            <br><small class="text-muted">{{ $package->location_text }}</small>
-                                        @endif
-                                    </td>
-                                    <td>
+                <div class="card-body p-3">
+                    <div class="row g-3">
+                        @foreach ($packages as $package)
+                            @php
+                                $statusColors = [
+                                    1 => 'success',
+                                    2 => 'secondary',
+                                    3 => 'danger',
+                                    4 => 'info',
+                                    5 => 'warning',
+                                    6 => 'primary',
+                                ];
+                                $statusColor = $statusColors[$package->status] ?? 'secondary';
+                            @endphp
+                            <div class="col-12 col-md-6 col-xl-4">
+                                <div class="card package-item h-100">
+                                    <div class="card-header d-flex justify-content-between align-items-center py-2">
+                                        <span class="tracking-code text-white">{{ $package->reference_number ?? '#' . $package->id }}</span>
                                         <span class="badge bg-{{ $statusColor }}">
                                             {{ getPackageStatus($package->status, $package->delivery_date) }}
                                         </span>
-                                    </td>
-                                    <td>{{ optional($package->created_at)->format('Y-m-d H:i') ?? '—' }}</td>
-                                    <td>
-                                        <div class="d-flex gap-1 justify-content-end">
-                                            <a href="{{ route('sellers.packages.show', $package->id) }}"
-                                                class="btn btn-outline-primary btn-sm">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            <a href="{{ route('sellers.packages.edit', $package->id) }}"
-                                                class="btn btn-outline-secondary btn-sm">
-                                                <i class="fas fa-pen"></i>
-                                            </a>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="package-meta d-flex flex-column gap-2 pt-1 pb-1">
+                                            <div>
+                                                <i class="fas fa-user"></i>
+                                                <span class="fw-semibold">{{ optional($package->Customer)->name ?? '—' }}</span>
+                                                @if (optional($package->Customer)->phone_number)
+                                                    <small class="text-muted d-block pe-4">{{ $package->Customer->phone_number }}</small>
+                                                @endif
+                                            </div>
+                                            <div>
+                                                <i class="fas fa-map-marker-alt"></i>
+                                                <span>{{ optional($package->Area)->name ?? '—' }}</span>
+                                                @if ($package->location_text)
+                                                    <small class="text-muted d-block pe-4">{{ $package->location_text }}</small>
+                                                @endif
+                                            </div>
+                                            <div>
+                                                <i class="fas fa-calendar-alt"></i>
+                                                <span>{{ optional($package->created_at)->format('Y-m-d H:i') ?? '—' }}</span>
+                                            </div>
                                         </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                                    </div>
+                                    <div style="background-color: var(--color-light);" class="card-footer border-top-0 d-flex gap-2 justify-content-end">
+                                        <a href="{{ route('sellers.packages.show', $package->id) }}"
+                                            class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-eye"></i> تفاصيل
+                                        </a>
+                                        <a href="{{ route('sellers.packages.edit', $package->id) }}"
+                                            class="btn btn-outline-secondary btn-sm">
+                                            <i class="fas fa-pen"></i> تعديل
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
             </div>
 
