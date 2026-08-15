@@ -42,9 +42,17 @@
                         @enderror
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100">تسجيل الدخول</button>
+                    <button type="submit" id="login-btn" class="btn btn-primary w-100">تسجيل الدخول</button>
                 </form>
             </div>
         </div>
     </div>
+
+    <script>
+        document.getElementById('login-btn').addEventListener('click', function() {
+            this.disabled = true;
+            this.textContent = 'جاري تسجيل الدخول...';
+            this.closest('form').submit();
+        });
+    </script>
 @endsection
