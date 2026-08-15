@@ -119,6 +119,12 @@
                                         <td>{{ $package->notes }}</td>
                                     </tr>
                                 @endif
+                                @if ((int) $package->status === 3)
+                                    <tr>
+                                        <th>سبب الإلغاء</th>
+                                        <td>{{ getReasonMessage($package->failure_reason) ?? '---' }}</td>
+                                    </tr>
+                                @endif
                                 <tr>
                                     <th>تاريخ الإنشاء</th>
                                     <td>{{ optional($package->created_at)->format('Y-m-d H:i') ?? '—' }}</td>

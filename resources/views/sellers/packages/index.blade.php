@@ -135,6 +135,18 @@
                                                 <i class="fas fa-calendar-alt"></i>
                                                 <span>{{ optional($package->created_at)->format('Y-m-d H:i') ?? '—' }}</span>
                                             </div>
+                                            @if ($package->description)
+                                                <div>
+                                                    <i class="fas fa-align-right"></i>
+                                                    <span>{{ $package->description }}</span>
+                                                </div>
+                                            @endif
+                                            @if ((int) $package->status === 3)
+                                                <div>
+                                                    <i class="fas fa-times-circle"></i>
+                                                    <span>سبب الإلغاء: {{ getReasonMessage($package->failure_reason) ?? '---' }}</span>
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
                                     <div style="background-color: var(--color-light);" class="card-footer border-top-0 d-flex gap-2 justify-content-end">
