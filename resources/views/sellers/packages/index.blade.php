@@ -135,10 +135,16 @@
                                     </td>
                                     <td>{{ optional($package->created_at)->format('Y-m-d H:i') ?? '—' }}</td>
                                     <td>
-                                        <a href="{{ route('sellers.packages.show', $package->id) }}"
-                                            class="btn btn-outline-primary btn-sm">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
+                                        <div class="d-flex gap-1 justify-content-end">
+                                            <a href="{{ route('sellers.packages.show', $package->id) }}"
+                                                class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ route('sellers.packages.edit', $package->id) }}"
+                                                class="btn btn-outline-secondary btn-sm">
+                                                <i class="fas fa-pen"></i>
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach

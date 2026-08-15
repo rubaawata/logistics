@@ -142,4 +142,57 @@ class SellerPackagesController extends Controller
 
         return view('sellers.packages.show', compact('seller', 'package'));
     }
+
+    /**
+     * Show the edit form for a seller's own package.
+     */
+    public function edit($id)
+    {
+        $seller = $this->authService->getAuthUser();
+
+        $package = Package::with(['Customer', 'Area'])->findOrFail($id);
+
+        Gate::forUser($seller)->authorize('update', $package);
+
+        return view('sellers.packages.edit', compact('seller', 'package'));
+    }
+
+    /**
+     * Update only the recipient details of a seller's own package.
+     */
+    public function update(Request $request, $id)
+    {
+        $seller = $this->authService->getAuthUser();
+
+        $package = Package::with('Customer')->findOrFail($id);
+
+        Gate::forUser($seller)->authorize('update', $package);
+
+        $data = $request->validate([
+            'recipient_name' => ['required', 'string', 'max:255'],
+            'recipient_phone' => ['required', 'string', 'max:50'],
+            'address' => ['required', 'string', 'max:255'],
+            'location_link' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        DB::transaction(function () use ($package, $data) {
+            $customer = $package->Customer;
+            if ($customer) {
+                $customer->update([
+                    'name' => $data['recipient_name'],
+                    'phone_number' => $data['recipient_phone'],
+                    'location_text_1' => $data['address'],
+                    'location_link_1' => $data['location_link'] ?? null,
+                ]);
+            }
+
+            $package->update([
+                'location_text' => $data['address'],
+                'location_link' => $data['location_link'] ?? null,
+            ]);
+        });
+
+        return redirect()->route('sellers.packages.show', $package->id)
+            ->with('success', 'تم تحديث الشحنة بنجاح.');
+    }
 }

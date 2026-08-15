@@ -81,6 +81,8 @@ Route::prefix('seller')->name('sellers.')->group(function () {
         Route::get('/packages', [SellerPackagesController::class, 'index'])->name('packages.index');
         Route::get('/packages/create', [SellerPackagesController::class, 'create'])->name('packages.create');
         Route::post('/packages', [SellerPackagesController::class, 'store'])->name('packages.store');
+        Route::get('/packages/{id}/edit', [SellerPackagesController::class, 'edit'])->name('packages.edit');
+        Route::put('/packages/{id}', [SellerPackagesController::class, 'update'])->name('packages.update');
         Route::get('/packages/{id}', [SellerPackagesController::class, 'show'])->name('packages.show');
     });
 });

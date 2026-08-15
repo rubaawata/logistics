@@ -41,9 +41,14 @@
         <div class="container">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <span class="align-middle">تفاصيل الشحنة</span>
-                <a href="{{ route('sellers.packages.index') }}" class="btn btn-outline-light btn-sm">
-                    <i class="fas fa-arrow-right"></i> رجوع للقائمة
-                </a>
+                <div class="d-flex gap-2">
+                    <a href="{{ route('sellers.packages.edit', $package->id) }}" class="btn btn-light btn-sm">
+                        <i class="fas fa-pen"></i> تعديل
+                    </a>
+                    <a href="{{ route('sellers.packages.index') }}" class="btn btn-outline-light btn-sm">
+                        <i class="fas fa-arrow-right"></i> رجوع للقائمة
+                    </a>
+                </div>
             </div>
         </div>
     </div>
