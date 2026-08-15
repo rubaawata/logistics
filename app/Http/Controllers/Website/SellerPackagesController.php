@@ -41,7 +41,8 @@ class SellerPackagesController extends Controller
                 $q->where('reference_number', 'like', '%' . $search . '%')
                     ->orWhere('id', $search)
                     ->orWhereHas('Customer', function ($customer) use ($search) {
-                        $customer->where('name', 'like', '%' . $search . '%');
+                        $customer->where('name', 'like', '%' . $search . '%')
+                            ->orWhere('phone_number', 'like', '%' . $search . '%');
                     })
                     ->orWhereHas('Area', function ($area) use ($search) {
                         $area->where('name', 'like', '%' . $search . '%');

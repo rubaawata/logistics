@@ -73,7 +73,7 @@
         @if ($packages->count() > 0 || request('search'))
             <form method="GET" action="{{ route('sellers.packages.index') }}" class="mb-3 d-flex gap-2">
                 <input type="text" name="search" value="{{ request('search') }}" class="form-control"
-                    placeholder="بحث برقم الشحنة أو اسم العميل أو اسم المنطقة" dir="rtl">
+                    placeholder="بحث" dir="rtl">
                 <button type="submit" class="btn btn-primary text-nowrap">
                     <i class="fas fa-search"></i> بحث
                 </button>
