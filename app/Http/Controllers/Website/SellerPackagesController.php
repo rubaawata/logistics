@@ -29,14 +29,27 @@ class SellerPackagesController extends Controller
     /**
      * List only the authenticated seller's own packages.
      */
-    public function index()
+    public function index(Request $request)
     {
         $seller = $this->authService->getAuthUser();
 
-        $packages = Package::where('seller_id', $seller->id)
-            ->with(['Customer', 'Area'])
-            ->orderBy('id', 'desc')
-            ->paginate(15);
+        $query = Package::where('seller_id', $seller->id)
+            ->with(['Customer', 'Area']);
+
+        if ($search = trim($request->input('search'))) {
+            $query->where(function ($q) use ($search) {
+                $q->where('reference_number', 'like', '%' . $search . '%')
+                    ->orWhere('id', $search)
+                    ->orWhereHas('Customer', function ($customer) use ($search) {
+                        $customer->where('name', 'like', '%' . $search . '%');
+                    })
+                    ->orWhereHas('Area', function ($area) use ($search) {
+                        $area->where('name', 'like', '%' . $search . '%');
+                    });
+            });
+        }
+
+        $packages = $query->orderBy('id', 'desc')->paginate(15);
 
         return view('sellers.packages.index', compact('seller', 'packages'));
     }

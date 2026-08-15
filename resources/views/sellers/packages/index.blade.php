@@ -70,7 +70,20 @@
             </div>
         @endif
 
-        @if ($packages->count() > 0)
+        @if ($packages->count() > 0 || request('search'))
+            <form method="GET" action="{{ route('sellers.packages.index') }}" class="mb-3 d-flex gap-2">
+                <input type="text" name="search" value="{{ request('search') }}" class="form-control"
+                    placeholder="بحث برقم الشحنة أو اسم العميل أو اسم المنطقة" dir="rtl">
+                <button type="submit" class="btn btn-primary text-nowrap">
+                    <i class="fas fa-search"></i> بحث
+                </button>
+                @if (request('search'))
+                    <a href="{{ route('sellers.packages.index') }}" class="btn btn-outline-secondary text-nowrap">
+                        <i class="fas fa-times"></i>
+                    </a>
+                @endif
+            </form>
+
             <div class="card packages-card shadow-sm">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h6 class="mb-0"><i class="fas fa-box"></i> شحناتي</h6>
@@ -135,16 +148,24 @@
             </div>
 
             <div class="d-flex justify-content-center mt-4">
-                {{ $packages->links() }}
+                {{ $packages->withQueryString()->links() }}
             </div>
         @else
             <div class="text-center py-5 empty-state">
                 <i class="fas fa-box-open fa-4x text-muted mb-4"></i>
-                <h3 class="text-secondary fw-bold">لا توجد شحنات بعد</h3>
-                <p class="text-muted">لم تقم بإضافة أي شحنة حتى الآن. ابدأ بإضافة شحنتك الأولى.</p>
-                <a href="{{ route('sellers.packages.create') }}" class="btn btn-primary mt-2">
-                    <i class="fas fa-plus"></i> إضافة شحنة
-                </a>
+                @if (request('search'))
+                    <h3 class="text-secondary fw-bold">لا توجد نتائج مطابقة</h3>
+                    <p class="text-muted">لم يتم العثور على أي شحنة تطابق «{{ request('search') }}».</p>
+                    <a href="{{ route('sellers.packages.index') }}" class="btn btn-primary mt-2">
+                        <i class="fas fa-times"></i> إلغاء البحث
+                    </a>
+                @else
+                    <h3 class="text-secondary fw-bold">لا توجد شحنات بعد</h3>
+                    <p class="text-muted">لم تقم بإضافة أي شحنة حتى الآن. ابدأ بإضافة شحنتك الأولى.</p>
+                    <a href="{{ route('sellers.packages.create') }}" class="btn btn-primary mt-2">
+                        <i class="fas fa-plus"></i> إضافة شحنة
+                    </a>
+                @endif
             </div>
         @endif
     </div>
